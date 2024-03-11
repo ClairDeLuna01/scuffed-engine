@@ -72,7 +72,11 @@ int main()
         0, 1, 2,
         2, 3, 0};
 
+    std::cout << "AAA" << std::endl;
+
     std::unique_ptr<VertexArrayObject> vao = std::make_unique<VertexArrayObject>(VertexArrayObject((void *)vaoData, 6));
+
+    std::cout << "ZZZ" << std::endl;
 
     vec3 vertices[] = {
         vec3(-0.5f, -0.5f, 0.0f),
@@ -82,8 +86,15 @@ int main()
 
     VertexBufferObject vbo1(sizeof(vec3), 0, GL_FLOAT, (void *)vertices, 4);
 
+    std::cout << "AAA" << std::endl;
+
     mesh.addVBO(vbo1);
+
+    std::cout << "BBB" << std::endl;
+
     mesh.setVAO(vao);
+
+    std::cout << "CCC" << std::endl;
 
     while (!glfwWindowShouldClose(window))
     {

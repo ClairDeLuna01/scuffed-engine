@@ -85,6 +85,7 @@ private:
 
     inline void genArray()
     {
+        // go look there https://stackoverflow.com/questions/21652546/what-is-the-role-of-glbindvertexarrays-vs-glbindbuffer-and-what-is-their-relatio
         glGenVertexArrays(1, &arrayID);
         if (arrayID == 0)
         {
@@ -96,7 +97,9 @@ private:
             std::cout << "Created VAO with ID: " << arrayID << std::endl;
         }
         glBindVertexArray(arrayID);
+        std::cout << "AAA" << std::endl;
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataLength * elementSize, data, GL_STATIC_DRAW);
+        std::cout << "AAA" << std::endl;
     }
 
 public:
@@ -158,7 +161,7 @@ public:
         vbos.push_back(vbo);
     }
 
-    inline void setVAO(std::unique_ptr<VertexArrayObject> _vao)
+    inline void setVAO(std::unique_ptr<VertexArrayObject> &_vao)
     {
         vao = std::move(_vao);
     }

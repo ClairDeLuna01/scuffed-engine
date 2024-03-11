@@ -1,8 +1,8 @@
 CC = g++
 CPPFLAGS = -Wall -Ofast -Wno-strict-aliasing -g --std=c++23
 ifeq ($(OS),Windows_NT)
-	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32  -lktx -lsoft_oal
-	LINKFLAGS = libglfw3.a libglfw3dll.a 
+	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32  -lktx -lsoft_oal -lgdi32
+	LINKFLAGS =  
 else
 	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lktx -lopenal -lX11
 	LINKFLAGS = 
@@ -12,7 +12,7 @@ INCLUDE = -Iinclude
 ifeq ($(OS),Windows_NT)
 	EXEC = ScuffedEngine.exe
 	RM = del /s /f /q
-	RUN = start $(EXEC)
+	RUN = $(EXEC)
 else
 	EXEC = ScuffedEngine
 	RM = rm -f
@@ -64,6 +64,10 @@ $(DEPFILES):
 include $(wildcard $(DEPFILES))
 
 clean:
+ifeq ($(OS),Windows_NT)
+	$(RM) $(EXEC) $(ODIR)\*.o $(DEPDIR)\*.d
+else
 	$(RM) $(EXEC) $(ODIR)/*.o $(DEPDIR)/*.d
+endif
 
 reinstall: clean default

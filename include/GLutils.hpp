@@ -46,7 +46,7 @@ std::ostream &operator<<(std::ostream &os, GLenum_t e)
     switch (e.val)
     {
     case GL_DEBUG_SEVERITY_HIGH:
-        os << "HIGHT";
+        os << "HIGH";
         break;
 
     case GL_DEBUG_SEVERITY_MEDIUM:
