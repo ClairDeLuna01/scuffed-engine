@@ -38,7 +38,7 @@ struct GLenum_t
 struct errorHistoric
 {
     GLuint id;
-    long time;
+    u64 time;
 };
 
 std::ostream &operator<<(std::ostream &os, GLenum_t e)

@@ -12,9 +12,9 @@
 inline std::string stripPath(std::string src)
 {
 
-    int lastSlashIndex = 0;
-    int size = src.length();
-    for (int i = 0; i < size; i++)
+    size_t lastSlashIndex = 0;
+    size_t size = src.length();
+    for (size_t i = 0; i < size; i++)
     {
         if (src[i] == '/')
             lastSlashIndex = i;
@@ -26,10 +26,10 @@ inline std::string stripPath(std::string src)
 inline std::string getExtension(std::string src)
 {
 
-    int dotIndex = 0;
+    size_t dotIndex = 0;
     bool foundDot = false;
-    int size = src.length();
-    for (int i = 0; i < size; i++)
+    size_t size = src.length();
+    for (size_t i = 0; i < size; i++)
     {
         if (src[i] == '.')
         {

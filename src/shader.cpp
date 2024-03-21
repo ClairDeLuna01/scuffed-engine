@@ -299,6 +299,97 @@ void ShaderProgram::_delete()
     this->ID = PROGRAM_NULL;
 }
 
+void ShaderProgram::setUniform(u32 location, const mat4 &value)
+{
+
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(u32 location, const vec3 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform3fv(location, 1, &value[0]);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(u32 location, const vec4 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform4fv(location, 1, &value[0]);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(u32 location, const f32 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform1f(location, value);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(u32 location, const i32 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform1i(location, value);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(u32 location, const u32 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform1ui(location, value);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
 ShaderProgramPtr newShaderProgram(std::string vertPath, std::string fragPath)
 {
     return std::make_shared<ShaderProgram>(vertPath, fragPath);

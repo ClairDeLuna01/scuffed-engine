@@ -1,10 +1,10 @@
 CC = g++
 CPPFLAGS = -Wall -Ofast -Wno-strict-aliasing -g --std=c++23
 ifeq ($(OS),Windows_NT)
-	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32  -lktx -lsoft_oal -lgdi32
+	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32
 	LINKFLAGS =  
 else
-	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lktx -lopenal -lX11
+	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11
 	LINKFLAGS = 
 endif
 
@@ -38,11 +38,11 @@ default: $(EXEC)
 
 obj/main.o : main.cpp
 obj/main.o : main.cpp 
-	@$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGSMAIN) $(CPPFLAGS) -Iinclude -Wno-delete-non-virtual-dtor $(LIBFLAGS) $(INCLUDE) $< -o $@
+	$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGSMAIN) $(CPPFLAGS) -Iinclude -Wno-delete-non-virtual-dtor $(LIBFLAGS) $(INCLUDE) $< -o $@
 
 obj/%.o : src/%.cpp
 obj/%.o : src/%.cpp
-	@$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGS) $(CPPFLAGS) $(LIBFLAGS) $(INCLUDE) -Iinclude $< -o $@ 
+	$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGS) $(CPPFLAGS) $(LIBFLAGS) $(INCLUDE) -Iinclude $< -o $@ 
 
 run:
 	$(RUN)
@@ -51,7 +51,7 @@ debug:
 	gdb $(EXEC)
 
 $(EXEC): $(OBJ)
-	@$(CC) -o $@ $^ $(CPPFLAGS) $(LIBFLAGS) $(LINKFLAGS)
+	$(CC) -o $@ $^ $(CPPFLAGS) $(LIBFLAGS) $(LINKFLAGS)
 
 $(DEPDIR): ; @mkdir $@
 

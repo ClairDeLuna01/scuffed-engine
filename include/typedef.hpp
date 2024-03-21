@@ -3,7 +3,12 @@
 #include <cstdint>
 #include <memory>
 
+#include <glm/glm.hpp>
+
+using namespace glm;
+
 class ShaderProgram;
+class ElementBufferObject;
 
 // Typedefs to have Rust-style typenames
 // clearly Rust is superior
@@ -24,3 +29,6 @@ typedef float f32;
 typedef double f64;
 
 typedef std::shared_ptr<ShaderProgram> ShaderProgramPtr;
+typedef std::unique_ptr<ElementBufferObject> EBOptr;
+
+typedef vec<3, u32, highp> uivec3;
