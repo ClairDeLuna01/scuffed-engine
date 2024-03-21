@@ -248,7 +248,11 @@ void Mesh3D::FromOBJ(const char *path, std::vector<uivec3> &indices, std::vector
 
     indices.clear();
     indices.reserve(vertexIndices.size() / 3);
-    memcpy(indices.data(), vertexIndices.data(), vertexIndices.size() * sizeof(uivec3));
+
+    for (size_t i = 0; i < vertexIndices.size(); i += 3)
+    {
+        indices.push_back(uivec3(vertexIndices[i], vertexIndices[i + 1], vertexIndices[i + 2]));
+    }
 }
 
 template void
