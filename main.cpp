@@ -228,7 +228,7 @@ i32 main()
     std::vector<vec3> normals2;
     std::vector<vec2> uvs2;
 
-    Mesh3D::Sphere(indices2, vertices2, normals2, uvs2);
+    Mesh3D::FromOBJ("res/sphere.obj", indices2, vertices2, normals2, uvs2);
 
     EBOptr ebo2 = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices2.data(), indices2.size() * sizeof(uivec3)));
 
@@ -242,7 +242,7 @@ i32 main()
     mesh2.addVBO(vbo6);
 
     Transform3D transform2;
-    transform2.setPosition(vec3(4.0f, 4.0f, 0.0f));
+    transform2.setPosition(vec3(4.0f, 0.0f, 0.0f));
     transform2.setRotation(vec3(0.0f, 0.0f, 0.0f));
     transform2.setScale(vec3(0.5f));
 
