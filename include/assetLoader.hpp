@@ -43,6 +43,7 @@ void loadMesh(const char *path, std::vector<uivec3> &indices, std::vector<vec3> 
         }
     }
 
+    indices.reserve(mesh->mNumFaces);
     for (size_t i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];

@@ -168,7 +168,7 @@ i32 main()
 
     Mesh3D::FromFile("res/sphere.obj", indices, vertices, normals, uvs);
 
-    EBOptr ebo = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices.data(), indices.size() * sizeof(uivec3)));
+    EBOptr ebo = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices.data(), indices.size() * 3));
 
     VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
     VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
@@ -230,7 +230,7 @@ i32 main()
 
     Mesh3D::FromFile("res/sphere.obj", indices2, vertices2, normals2, uvs2);
 
-    EBOptr ebo2 = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices2.data(), indices2.size() * sizeof(uivec3)));
+    EBOptr ebo2 = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices2.data(), indices2.size() * 3));
 
     VertexBufferObject vbo4(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices2.data(), vertices2.size());
     VertexBufferObject vbo5(3, sizeof(f32), 1, GL_FLOAT, (void *)normals2.data(), normals2.size());
