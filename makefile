@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp
 	LINKFLAGS =  
 else
-	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp
+	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp 
 	LINKFLAGS = 
 endif
 
@@ -174,5 +174,13 @@ else
 endif
 
 reinstall: clean default
+
+relink: 
+ifeq ($(OS),Windows_NT)
+	$(call REMOVE,$(EXEC))
+else
+	$(call REMOVE,$(EXEC))
+endif
+	@$(MAKE) $(EXEC) -j8 -s
 
 .PHONY: clean run debug reinstall

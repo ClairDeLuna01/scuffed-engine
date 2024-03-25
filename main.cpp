@@ -5,10 +5,9 @@
 #include "GLutils.hpp"
 #include "texture.hpp"
 #include "globals.hpp"
+#include "gameObject.hpp"
 
 using namespace EngineGlobals;
-
-GLFWwindow *window;
 
 void glfw_error_callback(i32 error, const char *description)
 {
@@ -95,14 +94,14 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
     viewMatrix = lookAt(camera_position, camera_position + camera_target, camera_up);
 }
 
-i32 main()
+void OpenGLInit()
 {
     // Initialise GLFW
     if (!glfwInit())
     {
         fprintf(stderr, "Failed to initialize GLFW\n");
         getchar();
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -117,7 +116,7 @@ i32 main()
         fprintf(stderr, "Failed to open GLFW window.\n");
         getchar();
         glfwTerminate();
-        return -1;
+        exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
 
@@ -128,13 +127,15 @@ i32 main()
         fprintf(stderr, "Failed to initialize GLEW\n");
         std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
         getchar();
-        return -1;
+        glfwTerminate();
+        exit(EXIT_FAILURE);
     }
 
     glfwSetErrorCallback(glfw_error_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    // Enable V-Sync
+    glfwSwapInterval(1);
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -157,124 +158,133 @@ i32 main()
     // update window size
     glViewport(0, 0, width, height);
 
-    ShaderProgramPtr program = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/unlit/texture.frag");
-
-    Mesh3D mesh(program);
-
-    std::vector<uivec3> indices;
-    std::vector<vec3> vertices;
-    std::vector<vec3> normals;
-    std::vector<vec2> uvs;
-
-    Mesh3D::FromFile("res/sphere.obj", indices, vertices, normals, uvs);
-
-    EBOptr ebo = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices.data(), indices.size() * 3));
-
-    VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
-    VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
-    VertexBufferObject vbo3(2, sizeof(f32), 2, GL_FLOAT, (void *)uvs.data(), uvs.size());
-
-    mesh.setEBO(ebo);
-
-    mesh.addVBO(vbo1);
-    mesh.addVBO(vbo2);
-    mesh.addVBO(vbo3);
-
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
+}
 
-    Transform3D transform;
-    transform.setPosition(vec3(0.0f, 0.0f, 0.0f));
-    transform.setRotation(vec3(0.0f, 0.0f, 0.0f));
-    transform.setScale(vec3(1.0f));
+i32 main()
+{
+    // Initialize OpenGL, GLFW and GLEW
+    OpenGLInit();
 
+    // Load shaders
+    ShaderProgramPtr programUnlit = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/unlit/texture.frag"); // unlit shader for the sun
+    ShaderProgramPtr programPlanet = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/planet.frag");   // lit shader for the moon that has only one texture and computes lighting
+    ShaderProgramPtr programEarth = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/earth.frag");     // lit shader for the earth that has two textures, day and night
+
+    // Set up camera
     vec3 cameraPos = vec3(0.0f, 0.0f, -5.0f);
-
     viewMatrix = lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     projectionMatrix = perspective(radians(45.0f), (f32)windowSize.x / (f32)windowSize.y, 0.1f, 100.0f);
 
-    mesh.setTransform(transform);
+    // Load meshes
+    // sun
+    // load the mesh
+    Mesh3DPtr sunMesh = loadMesh3D(programUnlit, "res/sphere_smooth.obj");
 
-    // mesh.setUniform(4, cameraPos);
-    // mesh.setUniform(0, vec4(0.84, 0.08, 0.99, 1.0));
+    // set the transform
+    Transform3D transformSun;
+    transformSun.setPosition(vec3(0.0f, 0.0f, 0.0f));
+    transformSun.setRotation(vec3(0.0f, 0.0f, 0.0f));
+    transformSun.setScale(vec3(2.0f));
+    sunMesh->setTransform(transformSun);
 
-    // Light lights[4];
-    // lights[0].position = vec3(0, 1.0, 5.0);
-    // lights[0].color = vec3(1.0f, 1.0f, 1.0f);
-    // lights[0].intensity = 1.0f;
+    // set the texture
+    sunMesh->addTexture("res/2k_sun.jpg");
 
-    // lights[1].position = vec3(5.0f, 0, -5.0f);
-    // lights[1].color = vec3(1.0f, 1.0f, 1.0f);
-    // lights[1].intensity = 0.5f;
+    // earth
+    // load the mesh
+    Mesh3DPtr earthMesh = loadMesh3D(programEarth, "res/sphere_smooth.obj");
 
-    // lights[2].position = vec3(0, 5.0f, -5.0f);
-    // lights[2].color = vec3(1.0f, 1.0f, 1.0f);
-    // lights[2].intensity = 0.5f;
+    // set the transform
+    Transform3D transformEarth;
+    transformEarth.setPosition(vec3(6.0f, 0.0f, 0.0f));
+    transformEarth.setRotation(vec3(0.0f, 0.0f, 0.0f));
+    transformEarth.setScale(vec3(1.0f));
+    earthMesh->setTransform(transformEarth);
 
-    TexturePtr texture1 = loadTexture("res/2k_earth_daymap.jpg");
+    // set the textures
+    earthMesh->addTexture("res/2k_earth_daymap.jpg");
+    earthMesh->addTexture("res/2k_earth_nightmap.jpg");
 
-    mesh.addTexture(texture1);
+    // moon
+    // load the mesh
+    Mesh3DPtr moonMesh = loadMesh3D(programPlanet, "res/sphere_smooth.obj");
 
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     mesh.setUniform(1000 + i * 3, lights[i].position);
-    //     mesh.setUniform(1001 + i * 3, lights[i].color);
-    //     mesh.setUniform(1002 + i * 3, lights[i].intensity);
-    // }
+    // set the transform
+    Transform3D transformMoon;
+    transformMoon.setPosition(vec3(3.0f, 0.0f, 0.0f));
+    transformMoon.setRotation(vec3(0.0f, 0.0f, 0.0f));
+    transformMoon.setScale(vec3(0.5f));
+    moonMesh->setTransform(transformMoon);
 
-    Mesh3D mesh2(program);
+    // set the texture
+    moonMesh->addTexture("res/2k_moon.jpg");
 
-    std::vector<uivec3> indices2;
-    std::vector<vec3> vertices2;
-    std::vector<vec3> normals2;
-    std::vector<vec2> uvs2;
+    // create game objects
+    GameObjectPtr earth = createGameObject(earthMesh);
+    GameObjectPtr moon = createGameObject(moonMesh);
+    GameObjectPtr sun = createGameObject(sunMesh);
 
-    Mesh3D::FromFile("res/sphere.obj", indices2, vertices2, normals2, uvs2);
+    // set parent-child relationships
+    sun->addChild(earth);
+    earth->addChild(moon);
 
-    EBOptr ebo2 = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices2.data(), indices2.size() * 3));
+    // set uniforms
+    mat4 earthModel = earth->getObjectMatrix();
+    vec3 earthPosition = earthModel[3];
+    earthMesh->setUniform(4, earthPosition);
 
-    VertexBufferObject vbo4(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices2.data(), vertices2.size());
-    VertexBufferObject vbo5(3, sizeof(f32), 1, GL_FLOAT, (void *)normals2.data(), normals2.size());
-    VertexBufferObject vbo6(2, sizeof(f32), 2, GL_FLOAT, (void *)uvs2.data(), uvs2.size());
+    mat4 moonModel = moon->getObjectMatrix();
+    vec3 moonPosition = moonModel[3];
+    moonMesh->setUniform(4, moonPosition);
 
-    mesh2.setEBO(ebo2);
-    mesh2.addVBO(vbo4);
-    mesh2.addVBO(vbo5);
-    mesh2.addVBO(vbo6);
-
-    Transform3D transform2;
-    transform2.setPosition(vec3(4.0f, 0.0f, 0.0f));
-    transform2.setRotation(vec3(0.0f, 0.0f, 0.0f));
-    transform2.setScale(vec3(0.5f));
-
-    mesh2.setTransform(transform2);
-    TexturePtr texture2 = loadTexture("res/2k_moon.jpg");
-
-    mesh2.addTexture(texture2);
-
-    u32 i = 0;
-
+    u64 i = 0;
     while (!glfwWindowShouldClose(window))
     {
+        // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // transform.setRotation(vec3(i / 200.0f, i / 100.0f, i / 50.0f));
-        mesh.setTransform(transform);
+        // Update the sun, earth and moon positions
+        Transform3D sunTransform;
+        sunTransform.setRotation(vec3(0, i / 100.0f, 0.0f));
+        sun->setTransform(sunTransform);
 
+        Transform3D earthTransform = earth->getTransform();
+        earthTransform.setRotation(vec3(0.0f, i / 50.0f, radians(22.44f)));
+        earth->setTransform(earthTransform);
+
+        Transform3D moonTransform = moon->getTransform();
+        moonTransform.setRotation(vec3(0.0f, i / 25.0f, radians(6.68f)));
+        moon->setTransform(moonTransform);
+
+        mat4 earthModel = earth->getObjectMatrix();
+        vec3 earthPosition = earthModel[3];
+        earthMesh->setUniform(4, earthPosition);
+
+        mat4 moonModel = moon->getObjectMatrix();
+        vec3 moonPosition = moonModel[3];
+        moonMesh->setUniform(4, moonPosition);
+
+        // compute deltatime
         f32 currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        std::cout << "FPS: " << 1.0f / deltaTime << "     \r" << std::flush;
+
         i++;
 
+        // Process input
         processInput(window, deltaTime);
 
-        mesh.draw();
+        // draw the scene
+        sun->draw();
 
-        mesh2.draw();
-
+        // Swap buffers and poll IO events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     glfwTerminate();
+    return 0;
 }

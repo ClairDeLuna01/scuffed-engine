@@ -53,3 +53,38 @@ inline u64 GetTimeMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
+
+namespace glm
+{
+    inline std::ostream &operator<<(std::ostream &os, const vec3 &v)
+    {
+        os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+        return os;
+    }
+
+    inline std::ostream &operator<<(std::ostream &os, const vec4 &v)
+    {
+        os << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+        return os;
+    }
+
+    inline std::ostream &operator<<(std::ostream &os, const mat4 &m)
+    {
+        os << "[";
+        for (int i = 0; i < 4; i++)
+        {
+            os << "[";
+            for (int j = 0; j < 4; j++)
+            {
+                os << m[j][i];
+                if (j != 3)
+                    os << ", ";
+            }
+            os << "]";
+            if (i != 3)
+                os << "\n";
+        }
+        os << "]";
+        return os;
+    }
+}

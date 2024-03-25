@@ -70,6 +70,11 @@ void Mesh::addTexture(TexturePtr &texture)
     textures.push_back(texture);
 }
 
+void Mesh::addTexture(std::string filename)
+{
+    textures.push_back(loadTexture(filename.c_str()));
+}
+
 template <typename T, std::enable_if_t<
                           std::is_same<T, mat4>::value ||
                               std::is_same<T, vec3>::value ||
@@ -208,11 +213,11 @@ void Mesh3D::Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std
 void Mesh3D::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
 {
     loadMesh(path, indices, vertices, normals, uvs);
+}
 
-    std::cout << "indices: " << indices.size() << std::endl;
-    std::cout << "vertices: " << vertices.size() << std::endl;
-    std::cout << "normals: " << normals.size() << std::endl;
-    std::cout << "uvs: " << uvs.size() << std::endl;
+Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename)
+{
+    return std::make_shared<Mesh3D>(shader, filename);
 }
 
 template void

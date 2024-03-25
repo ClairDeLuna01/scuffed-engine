@@ -148,7 +148,7 @@ public:
 class Mesh
 {
 protected:
-    std::shared_ptr<ShaderProgram> shader;
+    ShaderProgramPtr shader;
 
     std::vector<VertexBufferObject> vbos;
     EBOptr ebo = nullptr;
@@ -158,7 +158,7 @@ protected:
     std::vector<TexturePtr> textures;
 
 public:
-    Mesh(std::shared_ptr<ShaderProgram> _shader) : shader(_shader)
+    Mesh(ShaderProgramPtr _shader) : shader(_shader)
     {
         glGenVertexArrays(1, &vaoID);
     }
@@ -204,6 +204,7 @@ public:
     void setUniform(u32 location, const T &value);
 
     void addTexture(TexturePtr &texture);
+    void addTexture(std::string filename);
 };
 
 class Mesh3D : public Mesh
@@ -212,11 +213,37 @@ private:
     Transform3D transform;
 
 public:
-    Mesh3D(std::shared_ptr<ShaderProgram> _shader) : Mesh(_shader) {}
+    Mesh3D(ShaderProgramPtr _shader) : Mesh(_shader) {}
+    Mesh3D(ShaderProgramPtr _shader, std::string filename) : Mesh(_shader)
+    {
+        std::vector<uivec3> indices;
+        std::vector<vec3> vertices;
+        std::vector<vec3> normals;
+        std::vector<vec2> uvs;
+
+        Mesh3D::FromFile(filename.c_str(), indices, vertices, normals, uvs);
+
+        EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
+
+        VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
+        VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
+        VertexBufferObject vbo3(2, sizeof(f32), 2, GL_FLOAT, (void *)uvs.data(), uvs.size());
+
+        setEBO(ebo);
+
+        addVBO(vbo1);
+        addVBO(vbo2);
+        addVBO(vbo3);
+    }
 
     void setTransform(const Transform3D &t)
     {
         transform = t;
+    }
+
+    Transform3D &getTransform()
+    {
+        return transform;
     }
 
     void bind() override
@@ -229,8 +256,38 @@ public:
         Mesh::bind();
     };
 
+    void bind(mat4 objMat)
+    {
+        shader->use();
+        shader->setUniform(1, objMat);
+        shader->setUniform(2, viewMatrix);
+        shader->setUniform(3, projectionMatrix);
+
+        Mesh::bind();
+    }
+
+    void draw(mat4 objMat)
+    {
+        bind(objMat);
+        ebo->draw();
+        unbind();
+    }
+
+    void draw() override
+    {
+        bind();
+        ebo->draw();
+        unbind();
+    }
+
     // temporary until we have a model loader
     static void Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals);
     static void Sphere(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs, u32 sectorCount = 36, u32 stackCount = 18);
     static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs);
+
+    friend class gameObject;
 };
+
+typedef std::shared_ptr<Mesh3D> Mesh3DPtr;
+
+Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename);

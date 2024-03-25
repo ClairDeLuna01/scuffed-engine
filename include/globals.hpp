@@ -1,6 +1,7 @@
 #pragma once
 #include <typedef.hpp>
 
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 using namespace glm;
@@ -16,4 +17,6 @@ namespace EngineGlobals
     extern f32 lastFrame;
 
     extern ivec2 clickPos;
+
+    extern GLFWwindow *window;
 };
