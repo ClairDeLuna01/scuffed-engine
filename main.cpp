@@ -166,7 +166,7 @@ i32 main()
     std::vector<vec3> normals;
     std::vector<vec2> uvs;
 
-    Mesh3D::FromOBJ("res/sphere.obj", indices, vertices, normals, uvs);
+    Mesh3D::FromFile("res/sphere.obj", indices, vertices, normals, uvs);
 
     EBOptr ebo = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices.data(), indices.size() * sizeof(uivec3)));
 
@@ -228,7 +228,7 @@ i32 main()
     std::vector<vec3> normals2;
     std::vector<vec2> uvs2;
 
-    Mesh3D::FromOBJ("res/sphere.obj", indices2, vertices2, normals2, uvs2);
+    Mesh3D::FromFile("res/sphere.obj", indices2, vertices2, normals2, uvs2);
 
     EBOptr ebo2 = std::make_unique<ElementBufferObject>(ElementBufferObject((void *)indices2.data(), indices2.size() * sizeof(uivec3)));
 

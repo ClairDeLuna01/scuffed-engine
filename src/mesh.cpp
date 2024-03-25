@@ -1,5 +1,5 @@
 #include "mesh.hpp"
-#include "objloader.hpp"
+#include "assetLoader.hpp"
 
 #include <sstream>
 #include <fstream>
@@ -205,54 +205,14 @@ void Mesh3D::Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std
     }
 }
 
-struct Triangle
+void Mesh3D::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
 {
-    union
-    {
-        struct
-        {
-            int v1;
-            int v2;
-            int v3;
-        };
-        int vertices[3];
-    };
+    loadMesh(path, indices, vertices, normals, uvs);
 
-    union
-    {
-        struct
-        {
-            int n1;
-            int n2;
-            int n3;
-        };
-        int normals[3];
-    };
-
-    union
-    {
-        struct
-        {
-            int uv1;
-            int uv2;
-            int uv3;
-        };
-        int uvs[3];
-    };
-};
-
-void Mesh3D::FromOBJ(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
-{
-    std::vector<unsigned int> vertexIndices;
-    loadOBJ(path, vertices, uvs, normals, vertexIndices);
-
-    indices.clear();
-    indices.reserve(vertexIndices.size() / 3);
-
-    for (size_t i = 0; i < vertexIndices.size(); i += 3)
-    {
-        indices.push_back(uivec3(vertexIndices[i], vertexIndices[i + 1], vertexIndices[i + 2]));
-    }
+    std::cout << "indices: " << indices.size() << std::endl;
+    std::cout << "vertices: " << vertices.size() << std::endl;
+    std::cout << "normals: " << normals.size() << std::endl;
+    std::cout << "uvs: " << uvs.size() << std::endl;
 }
 
 template void

@@ -1,10 +1,10 @@
 CC = g++
 CPPFLAGS = -Wall -Ofast -Wno-strict-aliasing -g --std=c++23
 ifeq ($(OS),Windows_NT)
-	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32
+	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp
 	LINKFLAGS =  
 else
-	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11
+	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp
 	LINKFLAGS = 
 endif
 
@@ -34,14 +34,21 @@ SOURCES := $(call rwildcard,$(SDIR),*.cpp)
 OBJ := $(SOURCES:$(SDIR)/%.cpp=$(ODIR)/%.o)
 OBJ += $(ODIR)/main.o
 
-default: $(EXEC)
+default: 
+	@echo Building $(EXEC)
+	@echo Sources: $(SOURCES)
+	@echo Objects: $(OBJ)
+	@echo Dependencies: $(DEPFILES)
+	@$(MAKE) $(EXEC) -j8 -s
 
 obj/main.o : main.cpp
 obj/main.o : main.cpp 
+	@echo Building main.o
 	$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGSMAIN) $(CPPFLAGS) -Iinclude -Wno-delete-non-virtual-dtor $(LIBFLAGS) $(INCLUDE) $< -o $@
 
 obj/%.o : src/%.cpp
 obj/%.o : src/%.cpp
+	@echo Building $@
 	$(CC) -c $(DEPFLAGS_BASE) $(DEPFLAGS) $(CPPFLAGS) $(LIBFLAGS) $(INCLUDE) -Iinclude $< -o $@ 
 
 run:
@@ -51,6 +58,7 @@ debug:
 	gdb $(EXEC)
 
 $(EXEC): $(OBJ)
+	@echo "Linking $(EXEC)"
 	$(CC) -o $@ $^ $(CPPFLAGS) $(LIBFLAGS) $(LINKFLAGS)
 
 $(DEPDIR): ; @mkdir $@
