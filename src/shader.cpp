@@ -156,7 +156,7 @@ void Shader::compile()
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Successfully compiled shader " << this->shaderName << ".\n";
+    // std::cout << "Successfully compiled shader " << this->shaderName << ".\n";
 }
 
 std::string Shader::getType()
@@ -257,7 +257,7 @@ void ShaderProgram::link()
     this->vert._delete();
     this->frag._delete();
 
-    std::cout << "Successfully linked program ID " << this->ID << ".\n";
+    // std::cout << "Successfully linked program ID " << this->ID << ".\n";
 }
 
 void ShaderProgram::use()

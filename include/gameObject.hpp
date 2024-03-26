@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "shader.hpp"
-#include "typedef.hpp"
 #include "transform3D.hpp"
 #include "texture.hpp"
 
@@ -25,23 +24,23 @@ using namespace EngineGlobals;
 
 using namespace glm;
 
-class gameObject;
-typedef std::shared_ptr<gameObject> GameObjectPtr;
-
 class gameObject : public std::enable_shared_from_this<gameObject>
 {
-private:
+protected:
     std::vector<GameObjectPtr> children;
     GameObjectPtr parent = nullptr;
 
+    Transform3D transform;
     mat4 objMat = mat4(1.0f);
     Mesh3DPtr mesh = nullptr;
     bool enabled = true;
 
 public:
-    gameObject(Mesh3DPtr _mesh) : mesh(_mesh)
-    {
-    }
+    gameObject(Mesh3DPtr _mesh) : mesh(_mesh) {}
+
+    gameObject() {}
+
+    gameObject(Transform3D _transform) : transform(_transform) {}
 
     void addChild(GameObjectPtr child)
     {
@@ -71,8 +70,14 @@ public:
 
     void setTransform(Transform3D _transform)
     {
-        mesh->transform = _transform;
-        objMat = (!parent) ? mesh->transform.getModel() : parent->objMat * mesh->transform.getModel();
+        transform = _transform;
+
+        updateObjectMatrix();
+    }
+
+    void updateObjectMatrix()
+    {
+        objMat = (!parent) ? transform.getModel() : parent->objMat * transform.getModel();
         updateChildren();
     }
 
@@ -90,7 +95,7 @@ public:
     {
         for (auto &child : children)
         {
-            child->objMat = objMat * child->mesh->transform.getModel();
+            child->objMat = objMat * child->transform.getModel();
             child->updateChildren();
         }
     }
@@ -99,17 +104,21 @@ public:
     {
         if (!enabled)
             return;
-        mesh->draw(objMat);
+
+        if (mesh != nullptr)
+        {
+            // std::cout << objMat << std::endl;
+            mesh->draw(objMat);
+        }
+
         for (auto &child : children)
         {
             child->draw();
         }
     }
 
-    Transform3D &getTransform()
+    Transform3D getTransform()
     {
-        return mesh->transform;
+        return transform;
     }
 };
-
-GameObjectPtr createGameObject(Mesh3DPtr mesh);

@@ -1,4 +1,5 @@
 #include <transform3D.hpp>
+#include <iostream>
 
 vec3 Transform3D::getPosition()
 {
@@ -8,6 +9,11 @@ vec3 Transform3D::getPosition()
 quat Transform3D::getRotation()
 {
     return rotation;
+}
+
+vec3 Transform3D::getEulerRotation()
+{
+    return eulerAngles(rotation);
 }
 
 vec3 Transform3D::getScale()
@@ -67,6 +73,14 @@ void Transform3D::scaleBy(vec3 _scale)
 void Transform3D::rotateBy(quat _rotation)
 {
     rotation = _rotation * rotation;
+    modelNeedsUpdate = true;
+}
+
+void Transform3D::lookAt(vec3 _target)
+{
+    vec3 direction = normalize(_target - position);
+    rotation = quatLookAt(direction, vec3(0.0f, 1.0f, 0.0f));
+
     modelNeedsUpdate = true;
 }
 

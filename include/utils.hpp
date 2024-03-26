@@ -6,6 +6,13 @@
 
 #include <typedef.hpp>
 
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+using namespace glm;
+
 // HEADER-ONLY
 // Collection of utility functions that doesn't fit in other files
 
@@ -52,6 +59,11 @@ inline std::string getExtension(std::string src)
 inline u64 GetTimeMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+inline vec3 getEulerAngles(mat4 objMat)
+{
+    return eulerAngles(toQuat(objMat));
 }
 
 namespace glm

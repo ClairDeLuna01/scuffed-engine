@@ -169,9 +169,9 @@ public:
 
     void setEBO(EBOptr &_ebo);
 
-    virtual void bind();
+    void bind();
 
-    virtual void draw();
+    void draw();
 
     virtual void unbind();
 
@@ -210,8 +210,6 @@ public:
 class Mesh3D : public Mesh
 {
 private:
-    Transform3D transform;
-
 public:
     Mesh3D(ShaderProgramPtr _shader) : Mesh(_shader) {}
     Mesh3D(ShaderProgramPtr _shader, std::string filename) : Mesh(_shader)
@@ -236,31 +234,11 @@ public:
         addVBO(vbo3);
     }
 
-    void setTransform(const Transform3D &t)
-    {
-        transform = t;
-    }
-
-    Transform3D &getTransform()
-    {
-        return transform;
-    }
-
-    void bind() override
-    {
-        shader->use();
-        shader->setUniform(1, transform.getModel());
-        shader->setUniform(2, viewMatrix);
-        shader->setUniform(3, projectionMatrix);
-
-        Mesh::bind();
-    };
-
     void bind(mat4 objMat)
     {
         shader->use();
         shader->setUniform(1, objMat);
-        shader->setUniform(2, viewMatrix);
+        shader->setUniform(2, getViewMatrix());
         shader->setUniform(3, projectionMatrix);
 
         Mesh::bind();
@@ -273,13 +251,6 @@ public:
         unbind();
     }
 
-    void draw() override
-    {
-        bind();
-        ebo->draw();
-        unbind();
-    }
-
     // temporary until we have a model loader
     static void Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals);
     static void Sphere(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs, u32 sectorCount = 36, u32 stackCount = 18);
@@ -287,7 +258,5 @@ public:
 
     friend class gameObject;
 };
-
-typedef std::shared_ptr<Mesh3D> Mesh3DPtr;
 
 Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename);

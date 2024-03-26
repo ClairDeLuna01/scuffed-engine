@@ -2,10 +2,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-
 using namespace glm;
 
-#include <typedef.hpp>
+#include "typedef.hpp"
 
 class Transform3D
 {
@@ -19,6 +18,10 @@ private:
     bool modelHasChanged = false;
 
 public:
+    Transform3D() {}
+    Transform3D(vec3 _position, quat _rotation, vec3 _scale) : position(_position), rotation(_rotation), scale(_scale) {}
+    Transform3D(vec3 _position, vec3 eulerRotation, vec3 _scale) : position(_position), rotation(quat(eulerRotation)), scale(_scale) {}
+
     void setPosition(vec3 _position);
 
     void setRotation(quat _rotation);
@@ -29,6 +32,7 @@ public:
     vec3 getPosition();
 
     quat getRotation();
+    vec3 getEulerRotation();
 
     vec3 getScale();
 
@@ -39,6 +43,8 @@ public:
     void scaleBy(vec3 _scale);
 
     void rotateBy(quat _rotation);
+
+    void lookAt(vec3 _target);
 
     void reset();
 };
