@@ -214,15 +214,13 @@ i32 main()
     sun->addChild(earth);
     earth->addChild(moon);
 
-    GameObjectPtr cameraTarget = createGameObject();
     Transform3D cameraTransform;
-    vec3 cameraPos = vec3(0.0f, 3.0f, 15.0f);
+    vec3 cameraPos = vec3(0.0f, 0.0f, 15.0f);
     cameraTransform.setPosition(cameraPos);
-    cameraTransform.lookAt(cameraTarget->getTransform().getPosition());
+    // cameraTransform.lookAt(vec3(0));
     camera->setTransform(cameraTransform);
 
-    cameraTarget->addChild(camera);
-    sceneRoot->addChild(cameraTarget);
+    // sceneRoot->addChild(camera);
 
     // set uniforms
     mat4 earthModel = earth->getObjectMatrix();
@@ -261,15 +259,11 @@ i32 main()
         vec3 moonPosition = moonModel[3];
         moonMesh->setUniform(4, moonPosition);
 
-        Transform3D cameraTargetTransform = cameraTarget->getTransform();
-        cameraTargetTransform.setRotation(vec3(0.0f, i / 10.0f, 0.0f));
-        cameraTarget->setTransform(cameraTargetTransform);
-
-        Transform3D cameraTransform = camera->getTransform();
-        cameraTransform.lookAt(vec3(0));
-        // undo the rotation of the camera target
-        // cameraTransform.rotateBy(quat(vec3(0.0f, -i / 10.0f, 0.0f)));
-        camera->setTransform(cameraTransform);
+        Transform3D cameraTargetTransform = camera->getTransform();
+        // cameraTargetTransform.setPosition(vec3(15.0f * sin(i / 100.0f), 3.0f, 15.0f * cos(i / 100.0f)));
+        // cameraTargetTransform.lookAt(vec3(0));
+        // cameraTargetTransform.setRotation(vec3(0, i / 100.0f, 0.0f));
+        camera->setTransform(cameraTargetTransform);
 
         // compute deltatime
         f32 currentFrame = glfwGetTime();

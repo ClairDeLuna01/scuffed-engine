@@ -24,7 +24,7 @@ using namespace EngineGlobals;
 
 using namespace glm;
 
-class gameObject : public std::enable_shared_from_this<gameObject>
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 protected:
     std::vector<GameObjectPtr> children;
@@ -36,11 +36,11 @@ protected:
     bool enabled = true;
 
 public:
-    gameObject(Mesh3DPtr _mesh) : mesh(_mesh) {}
+    GameObject(Mesh3DPtr _mesh) : mesh(_mesh) {}
 
-    gameObject() {}
+    GameObject() {}
 
-    gameObject(Transform3D _transform) : transform(_transform) {}
+    GameObject(Transform3D _transform) : transform(_transform) {}
 
     void addChild(GameObjectPtr child)
     {

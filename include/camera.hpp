@@ -7,7 +7,7 @@ using namespace glm;
 #include "transform3D.hpp"
 #include "gameObject.hpp"
 
-class Camera : public gameObject
+class Camera : public GameObject
 {
 private:
     vec3 up = vec3(0.0f, 1.0f, 0.0f);

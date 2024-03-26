@@ -256,7 +256,7 @@ public:
     static void Sphere(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs, u32 sectorCount = 36, u32 stackCount = 18);
     static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs);
 
-    friend class gameObject;
+    friend class GameObject;
 };
 
 Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename);

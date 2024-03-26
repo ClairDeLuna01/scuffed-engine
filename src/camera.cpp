@@ -74,12 +74,14 @@ void Camera::updateCamera()
 
 void Camera::lookAt(vec3 _target)
 {
-    vec3 worldRotation = getEulerAngles(objMat);
+    transform.lookAt(_target);
+    needsUpdate = true;
 }
 
 void Camera::setTransform(Transform3D _transform)
 {
-    transform = _transform;
+    GameObject::setTransform(_transform);
+    needsUpdate = true;
 }
 
 CameraPtr createCamera()

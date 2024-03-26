@@ -9,7 +9,7 @@ using namespace glm;
 
 class ShaderProgram;
 class ElementBufferObject;
-class gameObject;
+class GameObject;
 class Mesh3D;
 class Transform3D;
 class Camera;
@@ -34,7 +34,7 @@ typedef double f64;
 
 typedef std::shared_ptr<ShaderProgram> ShaderProgramPtr;
 typedef std::unique_ptr<ElementBufferObject> EBOptr;
-typedef std::shared_ptr<gameObject> GameObjectPtr;
+typedef std::shared_ptr<GameObject> GameObjectPtr;
 typedef std::shared_ptr<Mesh3D> Mesh3DPtr;
 typedef std::shared_ptr<Camera> CameraPtr;
 

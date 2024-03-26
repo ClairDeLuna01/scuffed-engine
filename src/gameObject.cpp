@@ -2,10 +2,10 @@
 
 GameObjectPtr createGameObject(Mesh3DPtr mesh)
 {
-    return std::make_shared<gameObject>(mesh);
+    return std::make_shared<GameObject>(mesh);
 }
 
 GameObjectPtr createGameObject()
 {
-    return std::make_shared<gameObject>();
+    return std::make_shared<GameObject>();
 }
