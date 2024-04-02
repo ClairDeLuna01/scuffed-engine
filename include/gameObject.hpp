@@ -9,7 +9,7 @@
 #include "texture.hpp"
 
 #include "globals.hpp"
-#include "mesh.hpp"
+#include "component.hpp"
 
 using namespace EngineGlobals;
 
@@ -32,12 +32,13 @@ protected:
 
     Transform3D transform;
     mat4 objMat = mat4(1.0f);
-    Mesh3DPtr mesh = nullptr;
     bool enabled = true;
 
-public:
-    GameObject(Mesh3DPtr _mesh) : mesh(_mesh) {}
+    std::vector<ComponentPtr> components;
 
+    friend class Component;
+
+public:
     GameObject() {}
 
     GameObject(Transform3D _transform) : transform(_transform) {}
@@ -100,25 +101,76 @@ public:
         }
     }
 
-    void draw()
+    void Update()
     {
         if (!enabled)
             return;
 
-        if (mesh != nullptr)
+        // if (mesh != nullptr)
+        // {
+        //     // std::cout << objMat << std::endl;
+        //     mesh->draw(objMat);
+        // }
+
+        for (auto &component : components)
         {
-            // std::cout << objMat << std::endl;
-            mesh->draw(objMat);
+            component->Update();
         }
 
         for (auto &child : children)
         {
-            child->draw();
+            child->Update();
         }
     }
 
     Transform3D getTransform()
     {
         return transform;
+    }
+
+    template <typename T, typename... Args, std::enable_if_t<std::is_base_of<Component, T>::value, bool> = true>
+    std::shared_ptr<T> addComponent(Args... args)
+    {
+        std::shared_ptr<T> component = std::make_shared<T>(args...);
+        component->gameObject = shared_from_this();
+        components.push_back(component);
+        return component;
+    }
+
+    template <typename T, std::enable_if_t<std::is_base_of<Component, T>::value, bool> = true>
+    std::shared_ptr<T> getComponent()
+    {
+        for (auto &component : components)
+        {
+            if (std::dynamic_pointer_cast<T>(component))
+            {
+                return std::dynamic_pointer_cast<T>(component);
+            }
+        }
+        return nullptr;
+    }
+
+    void Start()
+    {
+        for (auto &component : components)
+        {
+            component->Start();
+        }
+    }
+
+    void EarlyUpdate()
+    {
+        for (auto &component : components)
+        {
+            component->EarlyUpdate();
+        }
+    }
+
+    void LateUpdate()
+    {
+        for (auto &component : components)
+        {
+            component->LateUpdate();
+        }
     }
 };

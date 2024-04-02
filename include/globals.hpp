@@ -24,5 +24,7 @@ namespace EngineGlobals
 
     extern CameraPtr camera;
 
+    extern MeshPtr skybox;
+
     mat4 getViewMatrix();
 };

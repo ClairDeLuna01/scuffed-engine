@@ -47,4 +47,8 @@ public:
     void lookAt(vec3 _target);
 
     void reset();
+
+    vec3 getForward();
+    vec3 getRight();
+    vec3 getUp();
 };

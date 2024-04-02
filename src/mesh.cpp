@@ -43,7 +43,7 @@ void Mesh::bind()
         glActiveTexture(GL_TEXTURE0 + i);
         textures[i]->bind();
 
-        setUniform(500 + i, (i32)i);
+        setUniform(UNIFORM_LOCATIONS::TEXTURE0 + i, (i32)i);
     }
 }
 
@@ -65,14 +65,16 @@ void Mesh::unbind()
     glBindVertexArray(0);
 }
 
-void Mesh::addTexture(TexturePtr &texture)
+MeshPtr Mesh::addTexture(TexturePtr &texture)
 {
     textures.push_back(texture);
+    return shared_from_this();
 }
 
-void Mesh::addTexture(std::string filename)
+MeshPtr Mesh::addTexture(std::string filename)
 {
     textures.push_back(loadTexture(filename.c_str()));
+    return shared_from_this();
 }
 
 template <typename T, std::enable_if_t<
@@ -83,16 +85,18 @@ template <typename T, std::enable_if_t<
                               std::is_same<T, i32>::value ||
                               std::is_same<T, u32>::value,
                           bool>>
-void Mesh::setUniform(u32 location, const T &value)
+MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
     shader->setUniform(location, value);
+    return shared_from_this();
 }
 
 template <typename T, std::enable_if_t<
                           std::is_same<T, f64>::value, bool>>
-void Mesh::setUniform(u32 location, const T &value)
+MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
     shader->setUniform(location, (f32)value);
+    return shared_from_this();
 }
 
 template <typename T, std::enable_if_t<
@@ -100,9 +104,10 @@ template <typename T, std::enable_if_t<
                               std::is_same<T, i16>::value ||
                               std::is_same<T, i8>::value,
                           bool>>
-void Mesh::setUniform(u32 location, const T &value)
+MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
     shader->setUniform(location, (i32)value);
+    return shared_from_this();
 }
 
 template <typename T, std::enable_if_t<
@@ -110,127 +115,37 @@ template <typename T, std::enable_if_t<
                               std::is_same<T, u16>::value ||
                               std::is_same<T, u8>::value,
                           bool>>
-void Mesh::setUniform(u32 location, const T &value)
+MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
     shader->setUniform(location, (u32)value);
+    return shared_from_this();
 }
 
-void Mesh3D::Sphere(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs, u32 sectorCount, u32 stackCount)
-{
-    f32 x, y, z, xy;
-    f32 nx, ny, nz, lengthInv = 1.0f / 1.0f;
-    f32 s, t;
-
-    f32 sectorStep = 2 * M_PI / sectorCount;
-    f32 stackStep = M_PI / stackCount;
-    f32 sectorAngle, stackAngle;
-
-    for (u32 i = 0; i <= stackCount; ++i)
-    {
-        stackAngle = M_PI / 2 - i * stackStep;
-        xy = 1.0f * cosf(stackAngle);
-        z = 1.0f * sinf(stackAngle);
-
-        for (u32 j = 0; j <= sectorCount; ++j)
-        {
-            sectorAngle = j * sectorStep;
-
-            x = xy * cosf(sectorAngle);
-            y = xy * sinf(sectorAngle);
-
-            vertices.push_back(vec3(x, y, z));
-
-            nx = x * lengthInv;
-            ny = y * lengthInv;
-            nz = z * lengthInv;
-
-            normals.push_back(vec3(nx, ny, nz));
-
-            // texture coordinates
-            s = (f32)j / sectorCount;
-            t = (f32)i / stackCount;
-
-            uvs.push_back(vec2(s, t));
-        }
-    }
-
-    u32 k1, k2;
-    for (u32 i = 0; i < stackCount; ++i)
-    {
-        k1 = i * (sectorCount + 1);
-        k2 = k1 + sectorCount + 1;
-
-        for (u32 j = 0; j < sectorCount; ++j, ++k1, ++k2)
-        {
-            if (i != 0)
-            {
-                indices.push_back(uivec3(k1, k2, k1 + 1));
-            }
-
-            if (i != (stackCount - 1))
-            {
-                indices.push_back(uivec3(k1 + 1, k2, k2 + 1));
-            }
-        }
-    }
-}
-
-void Mesh3D::Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals)
-{
-    // Create a unit cube
-    vertices = {
-        vec3(-0.5f, -0.5f, -0.5f),
-        vec3(0.5f, -0.5f, -0.5f),
-        vec3(0.5f, 0.5f, -0.5f),
-        vec3(-0.5f, 0.5f, -0.5f),
-        vec3(-0.5f, -0.5f, 0.5f),
-        vec3(0.5f, -0.5f, 0.5f),
-        vec3(0.5f, 0.5f, 0.5f),
-        vec3(-0.5f, 0.5f, 0.5f)};
-
-    indices = {
-        uivec3(0, 1, 2),
-        uivec3(0, 2, 3),
-        uivec3(1, 5, 6),
-        uivec3(1, 6, 2),
-        uivec3(5, 4, 7),
-        uivec3(5, 7, 6),
-        uivec3(4, 0, 3),
-        uivec3(4, 3, 7),
-        uivec3(3, 2, 6),
-        uivec3(3, 6, 7),
-        uivec3(4, 5, 1),
-        uivec3(4, 1, 0)};
-
-    normals.clear();
-    normals.resize(vertices.size());
-    for (size_t i = 0; i < vertices.size(); i++)
-    {
-        normals[i] = normalize(vertices[i]);
-    }
-}
-
-void Mesh3D::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
+void Mesh::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
 {
     loadMesh(path, indices, vertices, normals, uvs);
 }
 
-Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename)
+MeshPtr loadMesh(ShaderProgramPtr shader, std::string filename)
 {
-    return std::make_shared<Mesh3D>(shader, filename);
+    return std::make_shared<Mesh>(shader, filename);
 }
 
-template void
-Mesh::setUniform(u32 location, const mat4 &value);
-template void Mesh::setUniform(u32 location, const vec3 &value);
-template void Mesh::setUniform(u32 location, const vec4 &value);
-template void Mesh::setUniform(u32 location, const f32 &value);
-template void Mesh::setUniform(u32 location, const f64 &value);
-template void Mesh::setUniform(u32 location, const i64 &value);
-template void Mesh::setUniform(u32 location, const i32 &value);
-template void Mesh::setUniform(u32 location, const i16 &value);
-template void Mesh::setUniform(u32 location, const i8 &value);
-template void Mesh::setUniform(u32 location, const u64 &value);
-template void Mesh::setUniform(u32 location, const u32 &value);
-template void Mesh::setUniform(u32 location, const u16 &value);
-template void Mesh::setUniform(u32 location, const u8 &value);
+SkyboxPtr loadSkybox(ShaderProgramPtr shader, CubeMapPtr cubeMap)
+{
+    return std::make_shared<Skybox>(shader, cubeMap);
+}
+
+template MeshPtr Mesh::setUniform(u32 location, const mat4 &value);
+template MeshPtr Mesh::setUniform(u32 location, const vec3 &value);
+template MeshPtr Mesh::setUniform(u32 location, const vec4 &value);
+template MeshPtr Mesh::setUniform(u32 location, const f32 &value);
+template MeshPtr Mesh::setUniform(u32 location, const f64 &value);
+template MeshPtr Mesh::setUniform(u32 location, const i64 &value);
+template MeshPtr Mesh::setUniform(u32 location, const i32 &value);
+template MeshPtr Mesh::setUniform(u32 location, const i16 &value);
+template MeshPtr Mesh::setUniform(u32 location, const i8 &value);
+template MeshPtr Mesh::setUniform(u32 location, const u64 &value);
+template MeshPtr Mesh::setUniform(u32 location, const u32 &value);
+template MeshPtr Mesh::setUniform(u32 location, const u16 &value);
+template MeshPtr Mesh::setUniform(u32 location, const u8 &value);

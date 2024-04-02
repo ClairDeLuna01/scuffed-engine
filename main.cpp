@@ -7,83 +7,13 @@
 #include "globals.hpp"
 #include "gameObject.hpp"
 #include "camera.hpp"
+#include "inputManager.hpp"
 
 using namespace EngineGlobals;
 
 void glfw_error_callback(i32 error, const char *description)
 {
     fprintf(stderr, "GLFW Error: %s\n", description);
-}
-
-struct Light
-{
-    vec3 position;
-    vec3 color;
-    f32 intensity;
-};
-
-void processInput(GLFWwindow *window, f32 deltaTime)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    // if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    // {
-    //     // disable cursor
-    //     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //     f64 xpos, ypos;
-    //     glfwGetCursorPos(window, &xpos, &ypos);
-    //     if (clickPos.x == -1.0f)
-    //     {
-    //         clickPos = ivec2(xpos, ypos);
-    //     }
-
-    //     glfwSetCursorPos(window, clickPos.x, clickPos.y);
-
-    //     f32 xoffset = clickPos.x - xpos;
-    //     f32 yoffset = clickPos.y - ypos; // reversed since y-coordinates go from bottom to top
-
-    //     f32 sensitivity = 0.01f;
-    //     xoffset *= sensitivity;
-    //     yoffset *= sensitivity;
-
-    //     angle_orbit.x += xoffset;
-    //     angle_orbit.y += yoffset;
-
-    //     // compute new camera position from angle and zoom (radius)
-    //     camera_position = vec3(
-    //         zoom * cos(angle_orbit.x) * cos(angle_orbit.y),
-    //         zoom * sin(angle_orbit.y),
-    //         zoom * sin(angle_orbit.x) * cos(angle_orbit.y));
-
-    //     camera_target = -normalize(camera_position);
-
-    //     viewMatrix = lookAt(camera_position, camera_position + camera_target, camera_up);
-    // }
-    // else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-    // {
-    //     // enable cursor
-    //     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    //     clickPos = vec2(-1.0f, -1.0f);
-    // }
-}
-
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
-{
-    // zoom -= yoffset;
-    // if (zoom < 1.0f)
-    //     zoom = 1.0f;
-    // if (zoom > 45.0f)
-    //     zoom = 45.0f;
-
-    // camera_position = vec3(
-    //     zoom * cos(angle_orbit.x) * cos(angle_orbit.y),
-    //     zoom * sin(angle_orbit.y),
-    //     zoom * sin(angle_orbit.x) * cos(angle_orbit.y));
-
-    // camera_target = -normalize(camera_position);
-
-    // viewMatrix = lookAt(camera_position, camera_position + camera_target, camera_up);
 }
 
 void OpenGLInit()
@@ -140,7 +70,19 @@ void OpenGLInit()
 
     // glEnable(GL_CULL_FACE);
 
-    glfwSetScrollCallback(window, scroll_callback);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetKeyCallback(window, InputManager::keyCallback);
+    glfwSetCursorPosCallback(window, InputManager::cursorCallback);
+    glfwSetScrollCallback(window, InputManager::scrollCallback);
+    glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
+
+    // InputManager::addKeyCallback(CameraInput::FlyCamera::flyInputKey);
+    // InputManager::addCursorCallback(CameraInput::FlyCamera::flyInputCursor);
+    // InputManager::addStepCallback(CameraInput::FlyCamera::flyInputStep);
+
+    InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
+    InputManager::addMouseButtonCallback(CameraInput::OrbitalCamera::orbitalInputMouse);
+    InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
 
     // get screen size
     i32 width, height;
@@ -153,6 +95,16 @@ void OpenGLInit()
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 }
 
+vec3 rgb(u8 r, u8 g, u8 b)
+{
+    return vec3(r / 255.0f, g / 255.0f, b / 255.0f);
+}
+
+vec3 rgb(vec3 rgbColor)
+{
+    return vec3(rgbColor.r / 255.0f, rgbColor.g / 255.0f, rgbColor.b / 255.0f);
+}
+
 i32 main()
 {
     // Initialize OpenGL, GLFW and GLEW
@@ -162,40 +114,30 @@ i32 main()
     ShaderProgramPtr programUnlit = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/unlit/texture.frag"); // unlit shader for the sun
     ShaderProgramPtr programPlanet = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/planet.frag");   // lit shader for the moon that has only one texture and computes lighting
     ShaderProgramPtr programEarth = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/earth.frag");     // lit shader for the earth that has two textures, day and night
+    ShaderProgramPtr programLit = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/basic.frag");       // lit shader for the plane
 
     // Set up projection matrix
     projectionMatrix = perspective(radians(45.0f), (f32)windowSize.x / (f32)windowSize.y, 0.1f, 100.0f);
 
-    // Load meshes
-    // sun
-    // load the mesh
-    Mesh3DPtr sunMesh = loadMesh3D(programUnlit, "res/sphere_smooth.obj");
-
-    // set the texture
-    sunMesh->addTexture("res/2k_sun.jpg");
-
-    // earth
-    // load the mesh
-    Mesh3DPtr earthMesh = loadMesh3D(programEarth, "res/sphere_smooth.obj");
-
-    // set the textures
-    earthMesh->addTexture("res/2k_earth_daymap.jpg");
-    earthMesh->addTexture("res/2k_earth_nightmap.jpg");
-
-    // moon
-    // load the mesh
-    Mesh3DPtr moonMesh = loadMesh3D(programPlanet, "res/sphere_smooth.obj");
-
-    // set the texture
-    moonMesh->addTexture("res/2k_moon.jpg");
-
     // create game objects
-    GameObjectPtr earth = createGameObject(earthMesh);
-    GameObjectPtr moon = createGameObject(moonMesh);
-    GameObjectPtr sun = createGameObject(sunMesh);
+    GameObjectPtr earth = createGameObject();
+    GameObjectPtr moon = createGameObject();
+    GameObjectPtr sun = createGameObject();
+
+    // Load meshes
+    sun->addComponent<Mesh>(programUnlit, "res/sphere_smooth.obj")
+        ->addTexture("res/2k_sun.jpg");
+
+    earth->addComponent<Mesh>(programEarth, "res/sphere_smooth.obj")
+        ->addTexture("res/2k_earth_daymap.jpg")
+        ->addTexture("res/2k_earth_nightmap.jpg");
+
+    moon->addComponent<Mesh>(programPlanet, "res/sphere_smooth.obj")
+        ->addTexture("res/2k_moon.jpg");
 
     // set the transform
     Transform3D sunTransform;
+    sunTransform.setPosition(vec3(0.0f, 10.0f, 0.0f));
     sunTransform.setScale(vec3(2.0f));
     sun->setTransform(sunTransform);
 
@@ -215,23 +157,73 @@ i32 main()
     earth->addChild(moon);
 
     Transform3D cameraTransform;
-    vec3 cameraPos = vec3(0.0f, 0.0f, 15.0f);
+    vec3 cameraPos = vec3(0.0f, 3.0f, 15.0f);
     cameraTransform.setPosition(cameraPos);
     // cameraTransform.lookAt(vec3(0));
+    // cameraTransform.setRotation(vec3(0, -1, 0));
     camera->setTransform(cameraTransform);
 
-    // sceneRoot->addChild(camera);
+    sceneRoot->addChild(camera);
 
     // set uniforms
     mat4 earthModel = earth->getObjectMatrix();
     vec3 earthPosition = earthModel[3];
-    earthMesh->setUniform(4, earthPosition);
+    MeshPtr earthMesh = earth->getComponent<Mesh>();
+    earthMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, earthPosition);
 
     mat4 moonModel = moon->getObjectMatrix();
     vec3 moonPosition = moonModel[3];
-    moonMesh->setUniform(4, moonPosition);
+    MeshPtr moonMesh = moon->getComponent<Mesh>();
+    moonMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, moonPosition);
+
+    ShaderProgramPtr skyboxShader = std::make_shared<ShaderProgram>("shader/skybox.vert", "shader/skybox.frag");
+    CubeMapPtr cubeMap = loadCubeMap(std::array<std::string, 6>({"res/Daylight Box_Right.bmp",
+                                                                 "res/Daylight Box_Left.bmp",
+                                                                 "res/Daylight Box_Top.bmp",
+                                                                 "res/Daylight Box_Bottom.bmp",
+                                                                 "res/Daylight Box_Front.bmp",
+                                                                 "res/Daylight Box_Back.bmp"}));
+
+    // CubeMapPtr cubeMap = loadCubeMap("res/cubemaps_skybox.png");
+
+    SkyboxPtr skybox = loadSkybox(skyboxShader, cubeMap);
+
+    GameObjectPtr planeObject = createGameObject();
+    planeObject->addComponent<Mesh>(programLit, "res/plane.obj");
+
+    sceneRoot->addChild(planeObject);
+
+    Light lights[4];
+    memset(lights, 0, sizeof(lights));
+    lights[0].position = vec3(0.0f, 10.0f, 0.0f);
+    lights[0].color = rgb(255, 255, 255);
+    lights[0].intensity = 0.5f;
+
+    lights[1].position = vec3(5.0f, 5.0f, 5.0f);
+    lights[1].color = rgb(91, 206, 250);
+    lights[1].intensity = 0.5f;
+
+    lights[2].position = vec3(-5.0f, 5.0f, -5.0f);
+    lights[2].color = rgb(245, 169, 184);
+    lights[2].intensity = 0.5f;
+
+    // i32 positionLoc = programLit->getUniformLocation("lights[0].position");
+    // i32 colorLoc = programLit->getUniformLocation("lights[0].color");
+    // i32 intensityLoc = programLit->getUniformLocation("lights[0].intensity");
+
+    programLit->use();
+    for (int i = 0; i < 4; i++)
+    {
+        programLit->setUniform(LIGHT_POSITION + i * 3, lights[i].position);
+        programLit->setUniform(LIGHT_POSITION + i * 3 + 1, lights[i].color);
+        programLit->setUniform(LIGHT_POSITION + i * 3 + 2, lights[i].intensity);
+    }
+
+    MeshPtr planeMesh = planeObject->getComponent<Mesh>();
 
     u64 i = 0;
+
+    sceneRoot->Start();
     while (!glfwWindowShouldClose(window))
     {
         // Clear the screen
@@ -253,17 +245,17 @@ i32 main()
 
         mat4 earthModel = earth->getObjectMatrix();
         vec3 earthPosition = earthModel[3];
-        earthMesh->setUniform(4, earthPosition);
+        earthMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, earthPosition);
 
         mat4 moonModel = moon->getObjectMatrix();
         vec3 moonPosition = moonModel[3];
-        moonMesh->setUniform(4, moonPosition);
+        moonMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, moonPosition);
 
-        Transform3D cameraTargetTransform = camera->getTransform();
-        // cameraTargetTransform.setPosition(vec3(15.0f * sin(i / 100.0f), 3.0f, 15.0f * cos(i / 100.0f)));
+        // Transform3D cameraTargetTransform = camera->getTransform();
+        // cameraTargetTransform.setPosition(vec3(15.0f * sin(i / 200.0f), 3.0f, 15.0f * cos(i / 200.0f)));
         // cameraTargetTransform.lookAt(vec3(0));
         // cameraTargetTransform.setRotation(vec3(0, i / 100.0f, 0.0f));
-        camera->setTransform(cameraTargetTransform);
+        // camera->setTransform(cameraTargetTransform);
 
         // compute deltatime
         f32 currentFrame = glfwGetTime();
@@ -274,11 +266,21 @@ i32 main()
 
         i++;
 
-        // Process input
-        processInput(window, deltaTime);
+        // Process escape key input
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        InputManager::stepCallback(window, deltaTime);
 
         // draw the scene
-        sceneRoot->draw();
+        sceneRoot->EarlyUpdate();
+        sceneRoot->Update();
+        sceneRoot->LateUpdate();
+
+        if (skybox)
+        {
+            skybox->draw();
+        }
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);

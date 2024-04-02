@@ -39,3 +39,12 @@ TexturePtr loadTexture(const char *path)
 {
     return std::make_shared<Texture>(path);
 }
+
+CubeMapPtr loadCubeMap(std::array<std::string, 6> faces_filenames)
+{
+    return std::make_shared<CubeMap>(faces_filenames);
+}
+CubeMapPtr loadCubeMap(std::string filename)
+{
+    return std::make_shared<CubeMap>(filename);
+}

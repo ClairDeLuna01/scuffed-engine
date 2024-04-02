@@ -1,5 +1,6 @@
 #include <transform3D.hpp>
 #include <iostream>
+#include "utils.hpp"
 
 vec3 Transform3D::getPosition()
 {
@@ -79,7 +80,7 @@ void Transform3D::rotateBy(quat _rotation)
 void Transform3D::lookAt(vec3 _target)
 {
     vec3 direction = normalize(_target - position);
-    rotation = quatLookAt(direction, vec3(0.0f, 1.0f, 0.0f));
+    rotation = normalize(quatLookAt(direction, vec3(0.0f, 1.0f, 0.0f)));
 
     modelNeedsUpdate = true;
 }
@@ -90,4 +91,19 @@ void Transform3D::reset()
     rotation = quat(1.0f, 0.0f, 0.0f, 0.0f);
     scale = vec3(1.0f);
     modelNeedsUpdate = true;
+}
+
+vec3 Transform3D::getForward()
+{
+    return rotation * vec3(0.0f, 0.0f, -1.0f);
+}
+
+vec3 Transform3D::getRight()
+{
+    return normalize(cross(getForward(), vec3(0.0f, 1.0f, 0.0f)));
+}
+
+vec3 Transform3D::getUp()
+{
+    return normalize(cross(getRight(), getForward()));
 }

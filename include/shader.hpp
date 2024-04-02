@@ -84,12 +84,14 @@ public:
     u32 getFragID() { return frag.getID(); };
     u32 isLinked() { return _isLinked; };
 
-    void setUniform(u32 location, const mat4 &value);
-    void setUniform(u32 location, const vec3 &value);
-    void setUniform(u32 location, const vec4 &value);
-    void setUniform(u32 location, const f32 &value);
-    void setUniform(u32 location, const i32 &value);
-    void setUniform(u32 location, const u32 &value);
+    i32 getUniformLocation(std::string name) { return glGetUniformLocation(ID, name.c_str()); }
+
+    void setUniform(i32 location, const mat4 &value);
+    void setUniform(i32 location, const vec3 &value);
+    void setUniform(i32 location, const vec4 &value);
+    void setUniform(i32 location, const f32 &value);
+    void setUniform(i32 location, const i32 &value);
+    void setUniform(i32 location, const u32 &value);
 };
 
 ShaderProgramPtr newShaderProgram();

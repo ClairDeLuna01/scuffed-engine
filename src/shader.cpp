@@ -299,7 +299,7 @@ void ShaderProgram::_delete()
     this->ID = PROGRAM_NULL;
 }
 
-void ShaderProgram::setUniform(u32 location, const mat4 &value)
+void ShaderProgram::setUniform(i32 location, const mat4 &value)
 {
 
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
@@ -315,7 +315,7 @@ void ShaderProgram::setUniform(u32 location, const mat4 &value)
     }
 }
 
-void ShaderProgram::setUniform(u32 location, const vec3 &value)
+void ShaderProgram::setUniform(i32 location, const vec3 &value)
 {
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
     {
@@ -330,7 +330,7 @@ void ShaderProgram::setUniform(u32 location, const vec3 &value)
     }
 }
 
-void ShaderProgram::setUniform(u32 location, const vec4 &value)
+void ShaderProgram::setUniform(i32 location, const vec4 &value)
 {
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
     {
@@ -345,7 +345,7 @@ void ShaderProgram::setUniform(u32 location, const vec4 &value)
     }
 }
 
-void ShaderProgram::setUniform(u32 location, const f32 &value)
+void ShaderProgram::setUniform(i32 location, const f32 &value)
 {
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
     {
@@ -360,7 +360,7 @@ void ShaderProgram::setUniform(u32 location, const f32 &value)
     }
 }
 
-void ShaderProgram::setUniform(u32 location, const i32 &value)
+void ShaderProgram::setUniform(i32 location, const i32 &value)
 {
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
     {
@@ -375,7 +375,7 @@ void ShaderProgram::setUniform(u32 location, const i32 &value)
     }
 }
 
-void ShaderProgram::setUniform(u32 location, const u32 &value)
+void ShaderProgram::setUniform(i32 location, const u32 &value)
 {
     if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
     {
@@ -384,7 +384,6 @@ void ShaderProgram::setUniform(u32 location, const u32 &value)
     }
     else
     {
-
         std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
         exit(EXIT_FAILURE);
     }

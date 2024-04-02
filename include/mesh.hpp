@@ -11,6 +11,9 @@
 
 #include "globals.hpp"
 
+#include "component.hpp"
+#include "gameObject.hpp"
+
 using namespace EngineGlobals;
 
 #include <GL/glew.h>
@@ -23,6 +26,13 @@ using namespace EngineGlobals;
 #endif
 
 using namespace glm;
+
+struct Light
+{
+    vec3 position;
+    vec3 color;
+    f32 intensity;
+};
 
 class ElementBufferObject
 {
@@ -145,7 +155,9 @@ public:
     }
 };
 
-class Mesh
+typedef std::shared_ptr<class Mesh> MeshPtr;
+
+class Mesh : public Component, public std::enable_shared_from_this<Mesh>
 {
 protected:
     ShaderProgramPtr shader;
@@ -162,64 +174,16 @@ public:
     {
         glGenVertexArrays(1, &vaoID);
     }
-
-    ~Mesh();
-
-    void addVBO(VertexBufferObject &vbo);
-
-    void setEBO(EBOptr &_ebo);
-
-    void bind();
-
-    void draw();
-
-    virtual void unbind();
-
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, mat4>::value ||
-                                  std::is_same<T, vec3>::value ||
-                                  std::is_same<T, vec4>::value ||
-                                  std::is_same<T, f32>::value ||
-                                  std::is_same<T, i32>::value ||
-                                  std::is_same<T, u32>::value,
-                              bool> = true>
-    void setUniform(u32 location, const T &value);
-
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, f64>::value, bool> = true>
-    void setUniform(u32 location, const T &value);
-
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, i64>::value ||
-                                  std::is_same<T, i16>::value ||
-                                  std::is_same<T, i8>::value,
-                              bool> = true>
-    void setUniform(u32 location, const T &value);
-
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, u64>::value ||
-                                  std::is_same<T, u16>::value ||
-                                  std::is_same<T, u8>::value,
-                              bool> = true>
-    void setUniform(u32 location, const T &value);
-
-    void addTexture(TexturePtr &texture);
-    void addTexture(std::string filename);
-};
-
-class Mesh3D : public Mesh
-{
-private:
-public:
-    Mesh3D(ShaderProgramPtr _shader) : Mesh(_shader) {}
-    Mesh3D(ShaderProgramPtr _shader, std::string filename) : Mesh(_shader)
+    Mesh(ShaderProgramPtr _shader, std::string filename) : shader(_shader)
     {
+        glGenVertexArrays(1, &vaoID);
+
         std::vector<uivec3> indices;
         std::vector<vec3> vertices;
         std::vector<vec3> normals;
         std::vector<vec2> uvs;
 
-        Mesh3D::FromFile(filename.c_str(), indices, vertices, normals, uvs);
+        FromFile(filename.c_str(), indices, vertices, normals, uvs);
 
         EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
 
@@ -234,12 +198,55 @@ public:
         addVBO(vbo3);
     }
 
+    ~Mesh();
+
+    void addVBO(VertexBufferObject &vbo);
+
+    void setEBO(EBOptr &_ebo);
+
+    virtual void bind();
+
+    virtual void draw();
+
+    virtual void unbind();
+
+    template <typename T, std::enable_if_t<
+                              std::is_same<T, mat4>::value ||
+                                  std::is_same<T, vec3>::value ||
+                                  std::is_same<T, vec4>::value ||
+                                  std::is_same<T, f32>::value ||
+                                  std::is_same<T, i32>::value ||
+                                  std::is_same<T, u32>::value,
+                              bool> = true>
+    MeshPtr setUniform(u32 location, const T &value);
+
+    template <typename T, std::enable_if_t<
+                              std::is_same<T, f64>::value, bool> = true>
+    MeshPtr setUniform(u32 location, const T &value);
+
+    template <typename T, std::enable_if_t<
+                              std::is_same<T, i64>::value ||
+                                  std::is_same<T, i16>::value ||
+                                  std::is_same<T, i8>::value,
+                              bool> = true>
+    MeshPtr setUniform(u32 location, const T &value);
+
+    template <typename T, std::enable_if_t<
+                              std::is_same<T, u64>::value ||
+                                  std::is_same<T, u16>::value ||
+                                  std::is_same<T, u8>::value,
+                              bool> = true>
+    MeshPtr setUniform(u32 location, const T &value);
+
+    MeshPtr addTexture(TexturePtr &texture);
+    MeshPtr addTexture(std::string filename);
+
     void bind(mat4 objMat)
     {
         shader->use();
-        shader->setUniform(1, objMat);
-        shader->setUniform(2, getViewMatrix());
-        shader->setUniform(3, projectionMatrix);
+        shader->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, objMat);
+        shader->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, getViewMatrix());
+        shader->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
 
         Mesh::bind();
     }
@@ -251,12 +258,80 @@ public:
         unbind();
     }
 
-    // temporary until we have a model loader
-    static void Cube(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals);
-    static void Sphere(std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs, u32 sectorCount = 36, u32 stackCount = 18);
+    void Update() override
+    {
+        draw(getGameObject()->getObjectMatrix());
+    }
+
+    // temporary until we set up assimp to load whole scenes at once
     static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs);
 
     friend class GameObject;
 };
 
-Mesh3DPtr loadMesh3D(ShaderProgramPtr shader, std::string filename);
+MeshPtr loadMesh(ShaderProgramPtr shader, std::string filename);
+
+class Skybox : public Mesh
+{
+private:
+    CubeMapPtr cubeMap;
+
+public:
+    Skybox(ShaderProgramPtr _shader, CubeMapPtr _cubeMap) : Mesh(_shader), cubeMap(_cubeMap)
+    {
+        glGenVertexArrays(1, &vaoID);
+
+        std::vector<uivec3> indices;
+        std::vector<vec3> vertices;
+        std::vector<vec3> normals;
+        std::vector<vec2> uvs;
+
+        FromFile("res/skybox.obj", indices, vertices, normals, uvs);
+
+        EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
+
+        VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
+        VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
+        VertexBufferObject vbo3(2, sizeof(f32), 2, GL_FLOAT, (void *)uvs.data(), uvs.size());
+
+        setEBO(ebo);
+
+        addVBO(vbo1);
+        addVBO(vbo2);
+        addVBO(vbo3);
+    }
+
+    void bind() override
+    {
+        shader->use();
+        mat4 view = getViewMatrix();
+        view[3] = vec4(0, 0, 0, 1);
+        shader->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, view);
+        shader->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
+        shader->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, mat4(1.0f));
+
+        glActiveTexture(GL_TEXTURE0);
+        cubeMap->bind();
+        setUniform(500, cubeMap->getTextureID());
+
+        Mesh::bind();
+    }
+
+    void addTexture(TexturePtr &texture) = delete;
+    void addTexture(std::string filename) = delete;
+
+    void draw() override
+    {
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        bind();
+        ebo->draw();
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+        unbind();
+    }
+};
+
+typedef std::shared_ptr<Skybox> SkyboxPtr;
+
+SkyboxPtr loadSkybox(ShaderProgramPtr shader, CubeMapPtr cubeMap);

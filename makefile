@@ -1,5 +1,5 @@
 CC = g++
-CPPFLAGS = -Wall -Ofast -Wno-strict-aliasing -g --std=c++23
+CPPFLAGS = -Wall -O0 -Wno-strict-aliasing -g --std=c++23
 ifeq ($(OS),Windows_NT)
 	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp
 	LINKFLAGS =  

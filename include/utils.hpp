@@ -14,6 +14,8 @@
 
 using namespace glm;
 
+#include <GL/glew.h>
+
 // HEADER-ONLY
 // Collection of utility functions that doesn't fit in other files
 
@@ -101,3 +103,17 @@ namespace glm
         return os;
     }
 }
+
+enum UNIFORM_LOCATIONS : GLint
+{
+    MODEL_MATRIX = 1,
+    VIEW_MATRIX = 2,
+    PROJECTION_MATRIX = 3,
+    VIEW_POS = 4,
+
+    TEXTURE0 = 500,
+
+    ENVIRONMENT_MAP = 749,
+
+    LIGHT_POSITION = 750,
+};
