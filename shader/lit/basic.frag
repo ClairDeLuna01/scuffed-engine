@@ -19,7 +19,7 @@ layout(location = 4) uniform vec3 viewPos;
 layout(location = 750) uniform Light lights[4];
 
 void main() {
-    vec3 baseColor = vec3(1.0);
+    vec3 baseColor = vec3(0.5);
     vec3 ambient = 0.2 * baseColor;
     vec3 color = vec3(0.0);
     vec3 specular = vec3(0.0);

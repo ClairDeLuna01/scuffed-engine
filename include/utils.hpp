@@ -117,3 +117,13 @@ enum UNIFORM_LOCATIONS : GLint
 
     LIGHT_POSITION = 750,
 };
+
+inline vec3 rgb(u8 r, u8 g, u8 b)
+{
+    return vec3(r / 255.0f, g / 255.0f, b / 255.0f);
+}
+
+inline vec3 rgb(vec3 rgbColor)
+{
+    return vec3(rgbColor.r / 255.0f, rgbColor.g / 255.0f, rgbColor.b / 255.0f);
+}

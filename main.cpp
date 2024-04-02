@@ -16,6 +16,13 @@ void glfw_error_callback(i32 error, const char *description)
     fprintf(stderr, "GLFW Error: %s\n", description);
 }
 
+inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
+{
+    windowSize = ivec2(width, height);
+    glViewport(0, 0, width, height);
+    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 100.0f);
+}
+
 void OpenGLInit()
 {
     // Initialise GLFW
@@ -75,14 +82,7 @@ void OpenGLInit()
     glfwSetCursorPosCallback(window, InputManager::cursorCallback);
     glfwSetScrollCallback(window, InputManager::scrollCallback);
     glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
-
-    // InputManager::addKeyCallback(CameraInput::FlyCamera::flyInputKey);
-    // InputManager::addCursorCallback(CameraInput::FlyCamera::flyInputCursor);
-    // InputManager::addStepCallback(CameraInput::FlyCamera::flyInputStep);
-
-    InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
-    InputManager::addMouseButtonCallback(CameraInput::OrbitalCamera::orbitalInputMouse);
-    InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
+    glfwSetWindowSizeCallback(window, resizeCallback);
 
     // get screen size
     i32 width, height;
@@ -93,16 +93,6 @@ void OpenGLInit()
     glViewport(0, 0, width, height);
 
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
-}
-
-vec3 rgb(u8 r, u8 g, u8 b)
-{
-    return vec3(r / 255.0f, g / 255.0f, b / 255.0f);
-}
-
-vec3 rgb(vec3 rgbColor)
-{
-    return vec3(rgbColor.r / 255.0f, rgbColor.g / 255.0f, rgbColor.b / 255.0f);
 }
 
 i32 main()
@@ -186,6 +176,14 @@ i32 main()
 
     // CubeMapPtr cubeMap = loadCubeMap("res/cubemaps_skybox.png");
 
+    // InputManager::addKeyCallback(CameraInput::FlyCamera::flyInputKey);
+    // InputManager::addCursorCallback(CameraInput::FlyCamera::flyInputCursor);
+    // InputManager::addStepCallback(CameraInput::FlyCamera::flyInputStep);
+
+    InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
+    InputManager::addMouseButtonCallback(CameraInput::OrbitalCamera::orbitalInputMouse);
+    InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
+
     SkyboxPtr skybox = loadSkybox(skyboxShader, cubeMap);
 
     GameObjectPtr planeObject = createGameObject();
@@ -199,13 +197,13 @@ i32 main()
     lights[0].color = rgb(255, 255, 255);
     lights[0].intensity = 0.5f;
 
-    lights[1].position = vec3(5.0f, 5.0f, 5.0f);
+    lights[1].position = vec3(5.0f, 5.0f, 0.0f);
     lights[1].color = rgb(91, 206, 250);
-    lights[1].intensity = 0.5f;
+    lights[1].intensity = 1.0f;
 
-    lights[2].position = vec3(-5.0f, 5.0f, -5.0f);
+    lights[2].position = vec3(-5.0f, 5.0f, 0.0f);
     lights[2].color = rgb(245, 169, 184);
-    lights[2].intensity = 0.5f;
+    lights[2].intensity = 1.0f;
 
     // i32 positionLoc = programLit->getUniformLocation("lights[0].position");
     // i32 colorLoc = programLit->getUniformLocation("lights[0].color");
