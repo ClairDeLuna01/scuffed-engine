@@ -123,12 +123,12 @@ public:
         }
     }
 
-    Transform3D getTransform()
+    Transform3D &getTransform()
     {
         return transform;
     }
 
-    template <typename T, typename... Args, std::enable_if_t<std::is_base_of<Component, T>::value, bool> = true>
+    template <typename T, typename... Args, std::enable_if_t<std::is_base_of<Component, T>::value && std::is_constructible<T, Args...>::value, bool> = true>
     std::shared_ptr<T> addComponent(Args... args)
     {
         std::shared_ptr<T> component = std::make_shared<T>(args...);

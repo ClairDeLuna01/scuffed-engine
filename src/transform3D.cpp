@@ -35,62 +35,71 @@ mat4 Transform3D::getModel()
     return model;
 }
 
-void Transform3D::setPosition(vec3 _position)
+Transform3D Transform3D::setPosition(vec3 _position)
 {
     position = _position;
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::setRotation(quat _rotation)
+Transform3D Transform3D::setRotation(quat _rotation)
 {
-    rotation = _rotation;
+    rotation = normalize(_rotation);
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::setRotation(vec3 eulerRotation)
+Transform3D Transform3D::setRotation(vec3 eulerRotation)
 {
-    rotation = quat(eulerRotation);
+    rotation = normalize(quat(eulerRotation));
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::setScale(vec3 _scale)
+Transform3D Transform3D::setScale(vec3 _scale)
 {
     scale = _scale;
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::translateBy(vec3 _translation)
+Transform3D Transform3D::translateBy(vec3 _translation)
 {
     position += _translation;
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::scaleBy(vec3 _scale)
+Transform3D Transform3D::scaleBy(vec3 _scale)
 {
     scale *= _scale;
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::rotateBy(quat _rotation)
+Transform3D Transform3D::rotateBy(quat _rotation)
 {
-    rotation = _rotation * rotation;
+    rotation = normalize(_rotation * rotation);
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::lookAt(vec3 _target)
+Transform3D Transform3D::lookAt(vec3 _target)
 {
     vec3 direction = normalize(_target - position);
     rotation = normalize(quatLookAt(direction, vec3(0.0f, 1.0f, 0.0f)));
 
     modelNeedsUpdate = true;
+    return *this;
 }
 
-void Transform3D::reset()
+Transform3D Transform3D::reset()
 {
     position = vec3(0.0f);
     rotation = quat(1.0f, 0.0f, 0.0f, 0.0f);
     scale = vec3(1.0f);
     modelNeedsUpdate = true;
+    return *this;
 }
 
 vec3 Transform3D::getForward()

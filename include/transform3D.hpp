@@ -22,12 +22,12 @@ public:
     Transform3D(vec3 _position, quat _rotation, vec3 _scale) : position(_position), rotation(_rotation), scale(_scale) {}
     Transform3D(vec3 _position, vec3 eulerRotation, vec3 _scale) : position(_position), rotation(quat(eulerRotation)), scale(_scale) {}
 
-    void setPosition(vec3 _position);
+    Transform3D setPosition(vec3 _position);
 
-    void setRotation(quat _rotation);
-    void setRotation(vec3 eulerRotation);
+    Transform3D setRotation(quat _rotation);
+    Transform3D setRotation(vec3 eulerRotation);
 
-    void setScale(vec3 _scale);
+    Transform3D setScale(vec3 _scale);
 
     vec3 getPosition();
 
@@ -38,15 +38,15 @@ public:
 
     mat4 getModel();
 
-    void translateBy(vec3 _translation);
+    Transform3D translateBy(vec3 _translation);
 
-    void scaleBy(vec3 _scale);
+    Transform3D scaleBy(vec3 _scale);
 
-    void rotateBy(quat _rotation);
+    Transform3D rotateBy(quat _rotation);
 
-    void lookAt(vec3 _target);
+    Transform3D lookAt(vec3 _target);
 
-    void reset();
+    Transform3D reset();
 
     vec3 getForward();
     vec3 getRight();

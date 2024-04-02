@@ -136,6 +136,49 @@ SkyboxPtr loadSkybox(ShaderProgramPtr shader, CubeMapPtr cubeMap)
     return std::make_shared<Skybox>(shader, cubeMap);
 }
 
+bool Mesh::meshIntersect(Ray r, vec3 &intersectionPoint, vec3 &normal) const
+{
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        vec3 v0 = vertices[indices[i].x];
+        vec3 v1 = vertices[indices[i].y];
+        vec3 v2 = vertices[indices[i].z];
+
+        vec3 e1 = v1 - v0;
+        vec3 e2 = v2 - v0;
+
+        vec3 h = cross(r.direction, e2);
+        f32 a = dot(e1, h);
+
+        if (a > -0.00001 && a < 0.00001)
+            continue;
+
+        f32 f = 1.0f / a;
+        vec3 s = r.origin - v0;
+        f32 u = f * dot(s, h);
+
+        if (u < 0.0 || u > 1.0)
+            continue;
+
+        vec3 q = cross(s, e1);
+        f32 v = f * dot(r.direction, q);
+
+        if (v < 0.0 || u + v > 1.0)
+            continue;
+
+        f32 t = f * dot(e2, q);
+
+        if (t > 0.00001)
+        {
+            intersectionPoint = r.origin + r.direction * t;
+            normal = normalize(cross(e1, e2));
+            return true;
+        }
+    }
+
+    return false;
+}
+
 template MeshPtr Mesh::setUniform(u32 location, const mat4 &value);
 template MeshPtr Mesh::setUniform(u32 location, const vec3 &value);
 template MeshPtr Mesh::setUniform(u32 location, const vec4 &value);

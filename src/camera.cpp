@@ -31,14 +31,16 @@ vec3 Camera::getWorldUp()
 void Camera::updateCamera()
 {
     // compute translation and rotation from object matrix
-    vec3 worldTranslation = objMat[3];
-    quat worldRotation = quat_cast(objMat);
+    // vec3 worldTranslation = objMat[3];
+    // quat worldRotation = quat_cast(objMat);
 
-    // compute forward vector
-    vec3 forward = worldRotation * vec3(0.0f, 0.0f, -1.0f);
+    // // compute forward vector
+    // vec3 forward = worldRotation * vec3(0.0f, 0.0f, -1.0f);
 
-    vec3 target = worldTranslation + forward;
-    view = glm::lookAt(worldTranslation, target, worldUp);
+    // vec3 target = worldTranslation + forward;
+    // view = glm::lookAt(worldTranslation, target, worldUp);
+
+    view = inverse(objMat);
 }
 
 void Camera::lookAt(vec3 _target)

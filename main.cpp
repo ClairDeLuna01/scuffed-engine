@@ -20,7 +20,7 @@ inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
 {
     windowSize = ivec2(width, height);
     glViewport(0, 0, width, height);
-    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 100.0f);
+    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 1000.0f);
 }
 
 void OpenGLInit()
@@ -95,6 +95,11 @@ void OpenGLInit()
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
 }
 
+f32 randrange(f32 low, f32 high)
+{
+    return low + static_cast<f32>(rand()) / (static_cast<f32>(RAND_MAX / (high - low)));
+}
+
 i32 main()
 {
     // Initialize OpenGL, GLFW and GLEW
@@ -107,7 +112,7 @@ i32 main()
     ShaderProgramPtr programLit = std::make_shared<ShaderProgram>("shader/3D.vert", "shader/lit/basic.frag");       // lit shader for the plane
 
     // Set up projection matrix
-    projectionMatrix = perspective(radians(45.0f), (f32)windowSize.x / (f32)windowSize.y, 0.1f, 100.0f);
+    projectionMatrix = perspective(radians(45.0f), (f32)windowSize.x / (f32)windowSize.y, 0.1f, 1000.0f);
 
     // create game objects
     GameObjectPtr earth = createGameObject();
@@ -153,18 +158,18 @@ i32 main()
     // cameraTransform.setRotation(vec3(0, -1, 0));
     camera->setTransform(cameraTransform);
 
-    sceneRoot->addChild(camera);
-
     // set uniforms
     mat4 earthModel = earth->getObjectMatrix();
     vec3 earthPosition = earthModel[3];
     MeshPtr earthMesh = earth->getComponent<Mesh>();
     earthMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, earthPosition);
+    earthMesh->setUniform(5, sun->getTransform().getPosition());
 
     mat4 moonModel = moon->getObjectMatrix();
     vec3 moonPosition = moonModel[3];
     MeshPtr moonMesh = moon->getComponent<Mesh>();
     moonMesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, moonPosition);
+    moonMesh->setUniform(5, sun->getTransform().getPosition());
 
     ShaderProgramPtr skyboxShader = std::make_shared<ShaderProgram>("shader/skybox.vert", "shader/skybox.frag");
     CubeMapPtr cubeMap = loadCubeMap(std::array<std::string, 6>({"res/Daylight Box_Right.bmp",
@@ -187,9 +192,201 @@ i32 main()
     SkyboxPtr skybox = loadSkybox(skyboxShader, cubeMap);
 
     GameObjectPtr planeObject = createGameObject();
-    planeObject->addComponent<Mesh>(programLit, "res/plane.obj");
+    std::vector<MeshPtr> planeMeshes;
+    planeMeshes.push_back(loadMesh(programLit, "res/plane.obj"));
+    planeMeshes.push_back(loadMesh(programLit, "res/plane.lod1.obj"));
+    planeMeshes.push_back(loadMesh(programLit, "res/plane.lod2.obj"));
+    planeMeshes.push_back(loadMesh(programLit, "res/plane.lod3.obj"));
+
+    std::vector<f32> distances = {25.0f, 35.0f, 45.0f};
+    planeObject->addComponent<LODMesh>(planeMeshes, distances);
+
+    // planeObject->addComponent<Mesh>(programLit, "res/plane.obj");
+
+    GameObjectPtr player = createGameObject();
+    GameObjectPtr playerMesh = createGameObject();
+    playerMesh->addComponent<Mesh>(programLit, "res/skybox.obj");
+    playerMesh->getTransform().setScale(vec3(0.3f));
+
+    bool forward = false;
+    bool backward = false;
+    bool left = false;
+    bool right = false;
+    bool shift = false;
+
+    f32 playerVelocity = 0.0f;
+    f32 floorHeight = 0.0f;
+    bool grounded = false;
+    bool jumping = false;
+    f32 restitution = 0.5f;
+    vec3 randomEulerAngleOffset = vec3(randrange(-1.f, 1.f), randrange(-1.f, 1.f), randrange(-1.f, 1.f)) * 0.1f;
+
+    keycallback_t playerKeyCallback = [&](GLFWwindow *window, u32 key, u32 scancode, u32 action, u32 mods)
+    {
+        // std::cout << "Key: " << key << " Action: " << action << std::endl;
+        if (action == GLFW_PRESS)
+        {
+            if (key == GLFW_KEY_W)
+            {
+                forward = true;
+            }
+            if (key == GLFW_KEY_S)
+            {
+                backward = true;
+            }
+            if (key == GLFW_KEY_A)
+            {
+                left = true;
+            }
+            if (key == GLFW_KEY_D)
+            {
+                right = true;
+            }
+            if (key == GLFW_KEY_LEFT_SHIFT)
+            {
+                shift = true;
+            }
+            if (key == GLFW_KEY_SPACE && grounded)
+            {
+                playerVelocity = 0.3f;
+                player->setTransform(player->getTransform().translateBy(vec3(0.0f, playerVelocity, 0.0f)));
+                grounded = false;
+                jumping = true;
+                randomEulerAngleOffset = vec3(randrange(-1.f, 1.f), randrange(-1.f, 1.f), randrange(-1.f, 1.f)) * 0.1f;
+                randomEulerAngleOffset.x *= forward ? (-2.0f * sign(randomEulerAngleOffset.x)) * (shift ? 2.0f : 1.0f) : 1.0f;
+                randomEulerAngleOffset.x *= backward ? (2.0f * sign(randomEulerAngleOffset.x)) * (shift ? 2.0f : 1.0f) : 1.0f;
+                randomEulerAngleOffset.z *= right ? (-2.0f * sign(randomEulerAngleOffset.z)) * (shift ? 2.0f : 1.0f) : 1.0f;
+                randomEulerAngleOffset.z *= left ? (2.0f * sign(randomEulerAngleOffset.z)) * (shift ? 2.0f : 1.0f) : 1.0f;
+            }
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            if (key == GLFW_KEY_W)
+            {
+                forward = false;
+            }
+            if (key == GLFW_KEY_S)
+            {
+                backward = false;
+            }
+            if (key == GLFW_KEY_A)
+            {
+                left = false;
+            }
+            if (key == GLFW_KEY_D)
+            {
+                right = false;
+            }
+            if (key == GLFW_KEY_LEFT_SHIFT)
+            {
+                shift = false;
+            }
+        }
+    };
+
+    stepcallback_t playerStepCallback = [&](GLFWwindow *window, f32 deltaTime)
+    {
+        const f32 speed = ((shift) ? 8.0f : 2.0f) * deltaTime;
+        if (forward)
+        {
+            vec3 cameraForward = camera->getTransform().getForward() * vec3(1, 0, 1);
+            player->setTransform(player->getTransform().translateBy(cameraForward * speed));
+        }
+        if (backward)
+        {
+            vec3 cameraForward = camera->getTransform().getForward() * vec3(1, 0, 1);
+            player->setTransform(player->getTransform().translateBy(-cameraForward * speed));
+        }
+        if (left)
+        {
+            vec3 cameraRight = camera->getTransform().getRight() * vec3(1, 0, 1);
+            player->setTransform(player->getTransform().translateBy(-cameraRight * speed));
+        }
+        if (right)
+        {
+            vec3 cameraRight = camera->getTransform().getRight() * vec3(1, 0, 1);
+            player->setTransform(player->getTransform().translateBy(cameraRight * speed));
+        }
+    };
 
     sceneRoot->addChild(planeObject);
+    sceneRoot->addChild(player);
+    player->addChild(camera);
+    player->addChild(playerMesh);
+
+    stepcallback_t testCallback = [&](GLFWwindow *window, f32 deltaTime)
+    {
+        Ray r = {player->getTransform().getPosition() + vec3(0.0f, 100.0f, 0.0f), vec3(0.0f, -1.0f, 0.0f)};
+        vec3 intersectionPoint;
+        vec3 normal;
+        if (planeObject->getComponent<LODMesh>()->getCurrentMesh()->meshIntersect(r, intersectionPoint, normal))
+        {
+            floorHeight = intersectionPoint.y;
+
+            if (!jumping)
+                playerMesh->setTransform(playerMesh->getTransform().setRotation(quatLookAt(normal, vec3(0.0f, 1.0f, 0.0f))));
+            else
+            {
+                playerMesh->setTransform(playerMesh->getTransform().rotateBy(quat(randomEulerAngleOffset * max(abs(playerVelocity * 5.0f), 1.0f))));
+            }
+        }
+        else
+        {
+            if (jumping)
+                playerMesh->setTransform(playerMesh->getTransform().rotateBy(quat(randomEulerAngleOffset * max(abs(playerVelocity * 5.0f), 1.0f))));
+            else
+                playerMesh->setTransform(playerMesh->getTransform().rotateBy(quat(randomEulerAngleOffset * max(abs(playerVelocity * 5.0f), 0.1f))));
+            floorHeight = -100.0f;
+        }
+
+        const f32 heightOffset = 0.5f;
+        if (player->getTransform().getPosition().y <= floorHeight + heightOffset + 0.01f)
+        {
+            player->setTransform(player->getTransform().setPosition(vec3(
+                player->getTransform().getPosition().x,
+                floorHeight + heightOffset,
+                player->getTransform().getPosition().z)));
+
+            // bounce
+            if (playerVelocity < 0.0f)
+            {
+                playerVelocity *= -restitution;
+                // std::cout << playerVelocity << std::endl;
+                if (abs(playerVelocity) < 0.01f)
+                {
+                    playerVelocity = 0.0f;
+                    grounded = true;
+                    jumping = false;
+                }
+
+                player->setTransform(player->getTransform().translateBy(vec3(0.0f, playerVelocity, 0.0f)));
+            }
+            else
+            {
+                playerVelocity = 0.0f;
+                grounded = true;
+                jumping = false;
+            }
+
+            grounded = true;
+            jumping = false;
+        }
+        else if (player->getTransform().getPosition().y < -90.0f)
+        {
+            player->setTransform(player->getTransform().setPosition(vec3(0)));
+            grounded = false;
+        }
+        else
+        {
+            playerVelocity -= 0.01f;
+            player->setTransform(player->getTransform().translateBy(vec3(0.0f, playerVelocity, 0.0f)));
+            grounded = false;
+        }
+    };
+
+    InputManager::addStepCallback(testCallback);
+    InputManager::addKeyCallback(playerKeyCallback);
+    InputManager::addStepCallback(playerStepCallback);
 
     Light lights[4];
     memset(lights, 0, sizeof(lights));

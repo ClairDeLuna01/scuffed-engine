@@ -8,7 +8,7 @@
 #include "typedef.hpp"
 #include "transform3D.hpp"
 #include "texture.hpp"
-
+#include "camera.hpp"
 #include "globals.hpp"
 
 #include "component.hpp"
@@ -155,6 +155,12 @@ public:
     }
 };
 
+struct Ray
+{
+    vec3 origin;
+    vec3 direction;
+};
+
 typedef std::shared_ptr<class Mesh> MeshPtr;
 
 class Mesh : public Component, public std::enable_shared_from_this<Mesh>
@@ -169,6 +175,11 @@ protected:
 
     std::vector<TexturePtr> textures;
 
+    std::vector<uivec3> indices;
+    std::vector<vec3> vertices;
+    std::vector<vec3> normals;
+    std::vector<vec2> uvs;
+
 public:
     Mesh(ShaderProgramPtr _shader) : shader(_shader)
     {
@@ -177,11 +188,6 @@ public:
     Mesh(ShaderProgramPtr _shader, std::string filename) : shader(_shader)
     {
         glGenVertexArrays(1, &vaoID);
-
-        std::vector<uivec3> indices;
-        std::vector<vec3> vertices;
-        std::vector<vec3> normals;
-        std::vector<vec2> uvs;
 
         FromFile(filename.c_str(), indices, vertices, normals, uvs);
 
@@ -263,6 +269,13 @@ public:
         draw(getGameObject()->getObjectMatrix());
     }
 
+    void Update(mat4 objMat)
+    {
+        draw(objMat);
+    }
+
+    bool meshIntersect(Ray r, vec3 &intersectionPoint, vec3 &normal) const;
+
     // temporary until we set up assimp to load whole scenes at once
     static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs);
 
@@ -270,6 +283,39 @@ public:
 };
 
 MeshPtr loadMesh(ShaderProgramPtr shader, std::string filename);
+
+class LODMesh : public Component
+{
+private:
+    std::vector<MeshPtr> meshes;
+    std::vector<f32> distances;
+    u32 currentMesh = 0;
+
+public:
+    LODMesh(std::vector<MeshPtr> _meshes, std::vector<f32> _distances) : meshes(_meshes), distances(_distances) {}
+
+    void Update() override
+    {
+        vec3 cameraPosition = camera->getTransform().getPosition();
+        f32 d = distance(getGameObject()->getTransform().getPosition(), cameraPosition);
+        for (int i = 0; i < distances.size(); i++)
+        {
+            if (d < distances[i])
+            {
+                currentMesh = i;
+                meshes[i]->Update(getGameObject()->getObjectMatrix());
+                return;
+            }
+        }
+        currentMesh = distances.size();
+        meshes.back()->Update(getGameObject()->getObjectMatrix());
+    }
+
+    MeshPtr getCurrentMesh()
+    {
+        return meshes[currentMesh];
+    }
+};
 
 class Skybox : public Mesh
 {
