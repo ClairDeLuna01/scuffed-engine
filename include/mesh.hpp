@@ -312,7 +312,7 @@ public:
 
         glActiveTexture(GL_TEXTURE0);
         cubeMap->bind();
-        setUniform(500, cubeMap->getTextureID());
+        // setUniform(500, cubeMap->getTextureID());
 
         Mesh::bind();
     }
