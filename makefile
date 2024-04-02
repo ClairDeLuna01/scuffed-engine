@@ -10,11 +10,11 @@ endif
 
 INCLUDE = -Iinclude
 ifeq ($(OS),Windows_NT)
-	EXEC = ScuffedEngine.exe
+	EXEC = scuffed-engine.exe
 	RM = del /s /f /q
 	RUN = $(EXEC)
 else
-	EXEC = ScuffedEngine
+	EXEC = scuffed-engine
 	RM = rm -f
 	RUN = ./$(EXEC)
 endif
