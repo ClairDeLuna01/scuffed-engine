@@ -7,23 +7,26 @@
 #include <algorithm>
 
 #include <GL/glew.h>
-#define GLFW_DLL
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 
-#include <typedef.hpp>
-#include <utils.hpp>
+#include "typedef.hpp"
+#include "utils.hpp"
+
+#include "InputManager.hpp"
+#include "globals.hpp"
+using namespace EngineGlobals;
 
 // #include <Utils.hpp>
-const std::string TERMINAL_ERROR = "\e[1;31m"; //"\033[91m";
-const std::string TERMINAL_INFO = "\033[94m";
-const std::string TERMINAL_OK = "\033[92m";
-const std::string TERMINAL_RESET = "\033[0m";
-const std::string TERMINAL_TIMER = "\033[93m";
-const std::string TERMINAL_FILENAME = "\033[95m";
-const std::string TERMINAL_WARNING = "\e[38;5;208m";
-const std::string TERMINAL_NOTIF = "\e[1;36m";
+inline const std::string TERMINAL_ERROR = "\e[1;31m"; //"\033[91m";
+inline const std::string TERMINAL_INFO = "\033[94m";
+inline const std::string TERMINAL_OK = "\033[92m";
+inline const std::string TERMINAL_RESET = "\033[0m";
+inline const std::string TERMINAL_TIMER = "\033[93m";
+inline const std::string TERMINAL_FILENAME = "\033[95m";
+inline const std::string TERMINAL_WARNING = "\e[38;5;208m";
+inline const std::string TERMINAL_NOTIF = "\e[1;36m";
 
 // #define SHOW_GL_NOTIF
 // #define SHOW_GL_WARNING
@@ -41,93 +44,7 @@ struct errorHistoric
     u64 time;
 };
 
-std::ostream &operator<<(std::ostream &os, GLenum_t e)
-{
-    switch (e.val)
-    {
-    case GL_DEBUG_SEVERITY_HIGH:
-        os << "HIGH";
-        break;
-
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        os << "MEDIUM";
-        break;
-
-    case GL_DEBUG_SEVERITY_LOW:
-        os << "LOW";
-        break;
-
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        os << "NOTIFICATION";
-        break;
-
-    case GL_DEBUG_TYPE_ERROR:
-        os << "ERROR";
-        break;
-
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        os << "DEPRECATED BEHAVIOR";
-        break;
-
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        os << "UNDEFINED BEHAVIOR";
-        break;
-
-    case GL_DEBUG_TYPE_PORTABILITY:
-        os << "UNPORTABLE FUNCTIONALITY";
-        break;
-
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        os << "POSSIBLE PERFORMANCE ISSUE";
-        break;
-
-    case GL_DEBUG_TYPE_MARKER:
-        os << "COMMAND STREAM ANNOTATION";
-        break;
-
-    case GL_DEBUG_TYPE_PUSH_GROUP:
-        os << "GROUP PUSHING";
-        break;
-
-    case GL_DEBUG_TYPE_POP_GROUP:
-        os << "GROUP POPING";
-        break;
-
-    case GL_DEBUG_TYPE_OTHER:
-        os << "OTHER TYPE";
-        break;
-
-    case GL_DEBUG_SOURCE_API:
-        os << "OPENGL API";
-        break;
-
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        os << "WINDOW-SYSTEM API";
-        break;
-
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        os << "SHADER COMPILER";
-        break;
-
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-        os << "OPENGL ASSOCIATED APPLICATION";
-        break;
-
-    case GL_DEBUG_SOURCE_APPLICATION:
-        os << "USER";
-        break;
-
-    case GL_DEBUG_SOURCE_OTHER:
-        os << "OTHER SOURCE";
-        break;
-
-    default:
-        os << "UNKNOWN";
-        break;
-    }
-
-    return os;
-}
+std::ostream &operator<<(std::ostream &os, GLenum_t e);
 
 void printGLerror(
     GLenum _source,
@@ -135,36 +52,7 @@ void printGLerror(
     GLuint id,
     GLenum _severity,
     GLsizei length,
-    const GLchar *message)
-{
-    GLenum_t severity(_severity);
-    GLenum_t type(_type);
-    GLenum_t source(_source);
-
-    const std::string *color = &TERMINAL_RESET;
-
-    if (type.val == GL_DEBUG_TYPE_ERROR)
-    {
-        color = &TERMINAL_ERROR;
-    }
-    else if (severity.val == GL_DEBUG_SEVERITY_NOTIFICATION)
-    {
-        color = &TERMINAL_NOTIF;
-    }
-    else
-    {
-        color = &TERMINAL_WARNING;
-    }
-
-    std::cerr
-        << TERMINAL_NOTIF << "\nGL CALLBACK " << *color << "[" << type << "]"
-        << TERMINAL_RESET << "\n\tid       = " << *color << id
-        << TERMINAL_RESET << "\n\tfrom     = " << *color << source
-        << TERMINAL_RESET << "\n\tseverity = " << *color << severity
-        << TERMINAL_RESET << "\n\tmessage  = " << *color << message
-        << "\n\n"
-        << TERMINAL_RESET;
-}
+    const GLchar *message);
 
 void GLAPIENTRY MessageCallback(GLenum _source,
                                 GLenum _type,
@@ -172,36 +60,17 @@ void GLAPIENTRY MessageCallback(GLenum _source,
                                 GLenum _severity,
                                 GLsizei length,
                                 const GLchar *message,
-                                const void *userParam)
+                                const void *userParam);
+
+inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
 {
-    /*
-        Historic that restrain message callback spam at each frame
-        Some non duplicated error could be missed.
-    */
-#ifdef PREVENT_GL_NOTIF_SPAM
-    static std::deque<errorHistoric> historic;
-    static const long spamTimeout = 1E4;
+    windowSize = ivec2(width, height);
+    glViewport(0, 0, width, height);
+    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 1000.0f);
+}
 
-    u64 now = GetTimeMs();
+void glfw_error_callback(i32 error, const char *description);
 
-    for (auto i = historic.begin(); i != historic.end(); i++)
-        if (i->id == id && (now - i->time) < spamTimeout)
-            return;
-
-    historic.push_front((errorHistoric){id, now});
-#endif
-
-#ifndef SHOW_GL_NOTIF
-    if (_severity == GL_DEBUG_SEVERITY_NOTIFICATION)
-        return;
-#endif
-
-#ifndef SHOW_GL_WARNING
-    if (_severity == GL_DEBUG_SEVERITY_MEDIUM)
-        return;
-#endif
-
-    printGLerror(_source, _type, id, _severity, length, message);
-};
+void OpenGLInit();
 
 #endif

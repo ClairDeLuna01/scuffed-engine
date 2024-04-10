@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?xml-model href="scene.dtd"?>
+<scene name="TestScene">
+    <ressources>
+        <shader name="Unlit" vertex="shader/3D.vert" fragment="shader/unlit/texture.frag" />
+        <shader name="Planet" vertex="shader/3D.vert" fragment="shader/lit/planet.frag" />
+        <shader name="EarthShader" vertex="shader/3D.vert" fragment="shader/lit/earth.frag" />
+        <shader name="Lit" vertex="shader/3D.vert" fragment="shader/lit/basic.frag" />
+
+        <texture name="EarthDay" path="texture/2k_earth_daymap.jpg" />
+        <texture name="EarthNight" path="texture/2k_earth_nightmap.jpg" />
+        <texture name="MoonTex" path="texture/2k_moon.jpg" />
+        <texture name="SunTex" path="texture/2k_sun.jpg" />
+
+        <model name="Sphere" path="model/sphere.obj" />
+        <model name="Cube" path="model/cube.obj" />
+
+        <LODmodel name="TerrainModel">
+            <LOD path="res/plane.obj" distance="0" />
+            <LOD path="res/plane.lod1.obj" distance="25" />
+            <LOD path="res/plane.lod2.obj" distance="35" />
+            <LOD path="res/plane.lod3.obj" distance="45" />
+        </LODmodel>
+
+        <material name="SunMat">
+            <shaderRef shader="Unlit" />
+            <textureRef texture="SunTex" />
+        </material>
+        <material name="EarthMat">
+            <shaderRef shader="EarthShader" />
+            <textureRef texture="EarthDay" />
+            <textureRef texture="EarthNight" />
+        </material>
+        <material name="MoonMat">
+            <shaderRef shader="Planet" />
+            <textureRef texture="MoonTex" />
+        </material>
+        <material name="BasicMat">
+            <shaderRef shader="Lit" />
+        </material>
+
+        <objectDef name="Sun">
+            <modelRef model="Sphere" />
+            <materialRef material="SunMat" />
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="Earth">
+            <modelRef model="Sphere" />
+            <materialRef material="EarthMat" />
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="Moon">
+            <modelRef model="Sphere" />
+            <materialRef material="MoonMat" />
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="Player">
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="PlayerMesh">
+            <modelRef model="Cube" />
+            <materialRef material="BasicMat" />
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="Terrain">
+            <modelRef model="TerrainModel" />
+            <materialRef material="BasicMat" />
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+        <objectDef name="Camera">
+            <position>0 0 0</position>
+            <scale>1 1 1</scale>
+        </objectDef>
+
+    </ressources>
+
+    <graph>
+        <object name="Sun">
+            <object name="Earth">
+                <object name="Moon" />
+            </object>
+        </object>
+
+        <object name="Player">
+            <object name="Camera" />
+            <object name="PlayerMesh" />
+        </object>
+
+        <object name="Terrain" />
+    </graph>
+</scene>

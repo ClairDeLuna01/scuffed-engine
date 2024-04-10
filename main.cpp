@@ -8,97 +8,9 @@
 #include "gameObject.hpp"
 #include "camera.hpp"
 #include "inputManager.hpp"
+#include "DFAUtils.hpp"
 
 using namespace EngineGlobals;
-
-void glfw_error_callback(i32 error, const char *description)
-{
-    fprintf(stderr, "GLFW Error: %s\n", description);
-}
-
-inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
-{
-    windowSize = ivec2(width, height);
-    glViewport(0, 0, width, height);
-    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 1000.0f);
-}
-
-void OpenGLInit()
-{
-    // Initialise GLFW
-    if (!glfwInit())
-    {
-        fprintf(stderr, "Failed to initialize GLFW\n");
-        getchar();
-        exit(EXIT_FAILURE);
-    }
-
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    window = glfwCreateWindow(1024, 768, "Scuffed Engine", NULL, NULL);
-    if (window == NULL)
-    {
-        fprintf(stderr, "Failed to open GLFW window.\n");
-        getchar();
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-    glfwMakeContextCurrent(window);
-
-    glewExperimental = true;
-    GLenum err = glewInit();
-    if (err != GLEW_OK)
-    {
-        fprintf(stderr, "Failed to initialize GLEW\n");
-        std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
-        getchar();
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-
-    glfwSetErrorCallback(glfw_error_callback);
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-    // Enable V-Sync
-    glfwSwapInterval(1);
-
-    // Enable depth test
-    glEnable(GL_DEPTH_TEST);
-    // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
-
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(MessageCallback, 0);
-
-    // glEnable(GL_CULL_FACE);
-
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetKeyCallback(window, InputManager::keyCallback);
-    glfwSetCursorPosCallback(window, InputManager::cursorCallback);
-    glfwSetScrollCallback(window, InputManager::scrollCallback);
-    glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
-    glfwSetWindowSizeCallback(window, resizeCallback);
-
-    // get screen size
-    i32 width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    windowSize = ivec2(width, height);
-
-    // update window size
-    glViewport(0, 0, width, height);
-
-    glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
-}
-
-f32 randrange(f32 low, f32 high)
-{
-    return low + static_cast<f32>(rand()) / (static_cast<f32>(RAND_MAX / (high - low)));
-}
 
 i32 main()
 {
@@ -205,7 +117,7 @@ i32 main()
 
     GameObjectPtr player = createGameObject();
     GameObjectPtr playerMesh = createGameObject();
-    playerMesh->addComponent<Mesh>(programLit, "res/skybox.obj");
+    playerMesh->addComponent<Mesh>(programLit, "res/cube.obj");
     playerMesh->getTransform().setScale(vec3(0.3f));
 
     bool forward = false;
@@ -219,7 +131,7 @@ i32 main()
     bool grounded = false;
     bool jumping = false;
     f32 restitution = 0.5f;
-    vec3 randomEulerAngleOffset = vec3(randrange(-1.f, 1.f), randrange(-1.f, 1.f), randrange(-1.f, 1.f)) * 0.1f;
+    vec3 randomEulerAngleOffset = vec3(rand(-1.f, 1.f), rand(-1.f, 1.f), rand(-1.f, 1.f)) * 0.1f;
 
     keycallback_t playerKeyCallback = [&](GLFWwindow *window, u32 key, u32 scancode, u32 action, u32 mods)
     {
@@ -252,7 +164,7 @@ i32 main()
                 player->setTransform(player->getTransform().translateBy(vec3(0.0f, playerVelocity, 0.0f)));
                 grounded = false;
                 jumping = true;
-                randomEulerAngleOffset = vec3(randrange(-1.f, 1.f), randrange(-1.f, 1.f), randrange(-1.f, 1.f)) * 0.1f;
+                randomEulerAngleOffset = vec3(rand(-1.f, 1.f), rand(-1.f, 1.f), rand(-1.f, 1.f)) * 0.1f;
                 randomEulerAngleOffset.x *= forward ? (-2.0f * sign(randomEulerAngleOffset.x)) * (shift ? 2.0f : 1.0f) : 1.0f;
                 randomEulerAngleOffset.x *= backward ? (2.0f * sign(randomEulerAngleOffset.x)) * (shift ? 2.0f : 1.0f) : 1.0f;
                 randomEulerAngleOffset.z *= right ? (-2.0f * sign(randomEulerAngleOffset.z)) * (shift ? 2.0f : 1.0f) : 1.0f;
@@ -417,6 +329,24 @@ i32 main()
     MeshPtr planeMesh = planeObject->getComponent<Mesh>();
 
     u64 i = 0;
+
+    DFATransition<0, 1, 1> transition1;
+    DFATransition<0, 2, 0> transition2;
+    DFATransition<1, 2, 1> transition3;
+    DFATransition<1, 1, 0> transition4;
+    DFATransition<1, 0, 0> transition5;
+
+    DFA dfa(
+        0,
+        std::vector<i32>({0}),
+        transition1,
+        transition2,
+        transition3,
+        transition4,
+        transition5);
+
+    std::cout << (dfa.run(std::vector<i32>({2, 2, 1, 1, 1, 1, 2})) ? "Accepted" : "Rejected") << std::endl;
+    dfa.printTransitionMap();
 
     sceneRoot->Start();
     while (!glfwWindowShouldClose(window))

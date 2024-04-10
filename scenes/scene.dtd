@@ -1,0 +1,35 @@
+<!ELEMENT scene (ressources,graph)>
+<!ATTLIST scene name ID #REQUIRED>
+<!ELEMENT ressources (shader*,texture*,model*,LODmodel*,material*,objectDef*)>
+<!ELEMENT shader EMPTY>
+<!ATTLIST shader name ID #REQUIRED>
+<!ATTLIST shader vertex CDATA #REQUIRED>
+<!ATTLIST shader fragment CDATA #REQUIRED>
+<!ELEMENT texture EMPTY>
+<!ATTLIST texture name ID #REQUIRED>
+<!ATTLIST texture path CDATA #REQUIRED>
+<!ELEMENT model EMPTY>
+<!ATTLIST model name ID #REQUIRED>
+<!ATTLIST model path CDATA #REQUIRED>
+<!ELEMENT LODmodel (LOD+)>
+<!ATTLIST LODmodel name ID #REQUIRED>
+<!ELEMENT LOD EMPTY>
+<!ATTLIST LOD path CDATA #REQUIRED>
+<!ATTLIST LOD distance CDATA #REQUIRED>
+<!ELEMENT material (shaderRef,textureRef*)>
+<!ATTLIST material name ID #REQUIRED>
+<!ELEMENT shaderRef EMPTY>
+<!ATTLIST shaderRef shader IDREF #REQUIRED>
+<!ELEMENT textureRef EMPTY>
+<!ATTLIST textureRef texture IDREF #REQUIRED>
+<!ELEMENT objectDef ((modelRef,materialRef)?,position?,scale?,rotation?)>
+<!ATTLIST objectDef name ID #REQUIRED>
+<!ELEMENT modelRef EMPTY>
+<!ATTLIST modelRef model IDREF #REQUIRED>
+<!ELEMENT materialRef EMPTY>
+<!ATTLIST materialRef material IDREF #REQUIRED>
+<!ELEMENT position (#PCDATA)>
+<!ELEMENT scale (#PCDATA)>
+<!ELEMENT graph (object*)>
+<!ELEMENT object (object*)>
+<!ATTLIST object name IDREF #REQUIRED>

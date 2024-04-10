@@ -298,7 +298,7 @@ public:
     {
         vec3 cameraPosition = camera->getTransform().getPosition();
         f32 d = distance(getGameObject()->getTransform().getPosition(), cameraPosition);
-        for (int i = 0; i < distances.size(); i++)
+        for (size_t i = 0; i < distances.size(); i++)
         {
             if (d < distances[i])
             {
@@ -332,7 +332,7 @@ public:
         std::vector<vec3> normals;
         std::vector<vec2> uvs;
 
-        FromFile("res/skybox.obj", indices, vertices, normals, uvs);
+        FromFile("res/cube.obj", indices, vertices, normals, uvs);
 
         EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
 
