@@ -170,7 +170,7 @@ clean:
 ifeq ($(OS),Windows_NT)
 	$(call REMOVE, $(EXEC) $(ODIR)/*.o $(DEPDIR)/*.d)
 else
-	$(call REMOVE, $(EXEC) $(ODIR)/*.o $(DEPDIR)/*.d)
+	$(call REMOVE, $(EXEC) $(ODIR)/**.o $(DEPDIR)/**.d)
 endif
 
 reinstall: clean default

@@ -26,5 +26,7 @@ namespace EngineGlobals
 
     extern MeshPtr skybox;
 
+    extern UI *ui;
+
     mat4 getViewMatrix();
 };

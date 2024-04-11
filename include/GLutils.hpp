@@ -14,8 +14,11 @@
 #include "typedef.hpp"
 #include "utils.hpp"
 
-#include "InputManager.hpp"
+#include "inputManager.hpp"
 #include "globals.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 using namespace EngineGlobals;
 
 // #include <Utils.hpp>
@@ -72,5 +75,7 @@ inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
 void glfw_error_callback(i32 error, const char *description);
 
 void OpenGLInit();
+
+void ImGuiInit(GLFWwindow *window);
 
 #endif

@@ -15,6 +15,7 @@ class GameObject;
 class Mesh;
 class Transform3D;
 class Camera;
+class UI;
 
 // Typedefs to have Rust-style typenames
 // clearly Rust is superior :clowneline:

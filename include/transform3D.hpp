@@ -51,4 +51,6 @@ public:
     vec3 getForward();
     vec3 getRight();
     vec3 getUp();
+
+    void setDirty();
 };

@@ -9,6 +9,9 @@
 #include "camera.hpp"
 #include "inputManager.hpp"
 #include "DFAUtils.hpp"
+#include "UI.hpp"
+
+#include "imgui/imgui.h"
 
 using namespace EngineGlobals;
 
@@ -345,8 +348,19 @@ i32 main()
         transition4,
         transition5);
 
-    std::cout << (dfa.run(std::vector<i32>({2, 2, 1, 1, 1, 1, 2})) ? "Accepted" : "Rejected") << std::endl;
-    dfa.printTransitionMap();
+    // std::cout << (dfa.run(std::vector<i32>({2, 2, 1, 1, 1, 1, 2})) ? "Accepted" : "Rejected") << std::endl;
+    // dfa.printTransitionMap();
+
+    ui = new UI();
+
+    UIWindowPtr w = ui->add_window("sunRotation", {});
+    w->add_watcher("sunRotation", &sun->getTransform(), UIWindow::Transform3DWatchFlags::ROTATION);
+
+    // UIWindowPtr w = ui->add_window("test", {[](void)
+    //                                         {
+    //                                             ImGui::Text("Hello, world!");
+    //                                             // ImGui::SliderFloat("Slider", &sun->getTransform().rotation.y, 0.0f, 6.28318530718f);
+    //                                         }});
 
     sceneRoot->Start();
     while (!glfwWindowShouldClose(window))
@@ -357,7 +371,7 @@ i32 main()
 
         // Update the sun, earth and moon positions
         Transform3D sunTransform = sun->getTransform();
-        sunTransform.setRotation(vec3(0, i / 100.0f, 0.0f));
+        // sunTransform.setRotation(vec3(0, i / 100.0f, 0.0f));
         sun->setTransform(sunTransform);
 
         Transform3D earthTransform = earth->getTransform();
@@ -406,6 +420,8 @@ i32 main()
         {
             skybox->draw();
         }
+
+        ui->render();
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);

@@ -116,3 +116,8 @@ vec3 Transform3D::getUp()
 {
     return normalize(cross(getRight(), getForward()));
 }
+
+void Transform3D::setDirty()
+{
+    modelNeedsUpdate = true;
+}
