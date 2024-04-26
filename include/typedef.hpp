@@ -16,6 +16,7 @@ class Mesh;
 class Transform3D;
 class Camera;
 class UI;
+typedef std::shared_ptr<class Scene> ScenePtr;
 
 // Typedefs to have Rust-style typenames
 // clearly Rust is superior :clowneline:

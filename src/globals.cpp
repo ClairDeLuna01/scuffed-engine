@@ -11,8 +11,8 @@ ivec2 EngineGlobals::clickPos = ivec2(-1.0f, -1.0f);
 
 GLFWwindow *EngineGlobals::window = nullptr;
 
-GameObjectPtr EngineGlobals::sceneRoot = createGameObject();
-
 CameraPtr EngineGlobals::camera = createCamera();
 
 SkyboxPtr EngineGlobals::skybox = nullptr;
+
+ScenePtr EngineGlobals::scene = nullptr;

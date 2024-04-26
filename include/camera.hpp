@@ -4,40 +4,40 @@
 
 using namespace glm;
 
-#include "transform3D.hpp"
 #include "gameObject.hpp"
+#include "transform3D.hpp"
 
 namespace CameraInput
 {
-    extern f64 lastX, lastY;
-    extern f32 sensitivity;
+extern f64 lastX, lastY;
+extern f32 sensitivity;
 
-    namespace FlyCamera
-    {
-        extern bool forward, backward, left, right, up, down;
-        extern f32 speed;
-        void flyInputKey(GLFWwindow *, u32, u32, u32, u32);
-        void flyInputCursor(GLFWwindow *, f64, f64);
-        void flyInputStep(GLFWwindow *, f32);
-    }
+namespace FlyCamera
+{
+extern bool forward, backward, left, right, up, down;
+extern f32 speed;
+void flyInputKey(GLFWwindow *, u32, u32, u32, u32);
+void flyInputCursor(GLFWwindow *, f64, f64);
+void flyInputStep(GLFWwindow *, f32);
+} // namespace FlyCamera
 
-    namespace OrbitalCamera
-    {
-        extern f32 radius, angleX, angleY;
-        extern bool mousePressed;
-        void orbitalInputCursor(GLFWwindow *, f64, f64);
-        void orbitalInputMouse(GLFWwindow *, u32, u32, u32);
-        void orbitalInputScroll(GLFWwindow *, f64, f64);
-    }
-}
+namespace OrbitalCamera
+{
+extern f32 radius, angleX, angleY;
+extern bool mousePressed;
+void orbitalInputCursor(GLFWwindow *, f64, f64);
+void orbitalInputMouse(GLFWwindow *, u32, u32, u32);
+void orbitalInputScroll(GLFWwindow *, f64, f64);
+} // namespace OrbitalCamera
+} // namespace CameraInput
 
 class Camera : public GameObject
 {
-private:
+  private:
     const vec3 worldUp = vec3(0.0f, 1.0f, 0.0f);
     mat4 view = mat4(1.0f);
 
-public:
+  public:
     bool needsUpdate;
     Camera();
 

@@ -18,10 +18,10 @@
         <model name="Cube" path="res/cube.obj" />
 
         <LODmodel name="TerrainModel">
-            <LOD path="res/plane.obj" distance="35" />
-            <LOD path="res/plane.lod1.obj" distance="50" />
-            <LOD path="res/plane.lod2.obj" distance="75" />
-            <LOD path="res/plane.lod3.obj" distance="100" />
+            <LOD path="res/plane.obj" distance="50" />
+            <LOD path="res/plane.lod1.obj" distance="75" />
+            <LOD path="res/plane.lod2.obj" distance="100" />
+            <LOD path="res/plane.lod3.obj" distance="200" />
         </LODmodel>
 
         <material name="SunMat">
@@ -64,7 +64,8 @@
 
         <objectDef name="Player">
             <position>0 0 0</position>
-            <scale>1</scale>
+            <scale>0.3</scale>
+            <script className="PlayerController" />
         </objectDef>
 
         <objectDef name="PlayerMesh">
@@ -79,14 +80,25 @@
             <scale>1</scale>
         </objectDef>
 
-        <objectDef name="Camera">
-            <position>0 0 0</position>
-            <scale>1</scale>
-        </objectDef>
+        <cameraDef>
+            <position>0 0 10</position>
+            <rotation>0 0 0</rotation>
+            <script className="OrbitalCam" />
+        </cameraDef>
+
+        <skybox name="blueSky">
+            <top path="res/Daylight Box_Top.bmp" />
+            <bottom path="res/Daylight Box_Bottom.bmp" />
+            <left path="res/Daylight Box_Left.bmp" />
+            <right path="res/Daylight Box_Right.bmp" />
+            <front path="res/Daylight Box_Front.bmp" />
+            <back path="res/Daylight Box_Back.bmp" />
+        </skybox>
 
     </ressources>
 
     <graph>
+        <skyboxRef skybox="blueSky" />
         <object name="Sun">
             <object name="Earth">
                 <object name="Moon" />

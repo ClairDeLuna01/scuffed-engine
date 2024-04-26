@@ -26,5 +26,7 @@ extern CameraPtr camera;
 
 extern SkyboxPtr skybox;
 
+extern ScenePtr scene;
+
 mat4 getViewMatrix();
 }; // namespace EngineGlobals

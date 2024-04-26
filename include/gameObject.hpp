@@ -55,6 +55,11 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     void addChild(GameObjectPtr child)
     {
         children.push_back(child);
+        if (child->parent)
+        {
+            child->parent->removeChild(child);
+        }
+
         child->parent = shared_from_this();
 
         updateChildren();
@@ -62,10 +67,26 @@ class GameObject : public std::enable_shared_from_this<GameObject>
 
     void setParent(GameObjectPtr _parent)
     {
+        if (parent)
+        {
+            parent->removeChild(shared_from_this());
+        }
         parent = _parent;
         parent->addChild(shared_from_this());
 
         parent->updateChildren();
+    }
+
+    void removeChild(GameObjectPtr child)
+    {
+        for (auto it = children.begin(); it != children.end(); it++)
+        {
+            if (*it == child)
+            {
+                children.erase(it);
+                break;
+            }
+        }
     }
 
     GameObjectPtr getParent()

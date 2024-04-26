@@ -6,7 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 using namespace glm;
 
-Camera::Camera()
+Camera::Camera() : GameObject("Camera")
 {
 }
 

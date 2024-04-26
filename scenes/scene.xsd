@@ -20,6 +20,8 @@
                 <xs:element ref="LODmodel" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="material" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="objectDef" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="cameraDef" minOccurs="1" maxOccurs="1" />
+                <xs:element ref="skybox" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -84,6 +86,26 @@
         <xs:attribute name="texture" type="xs:IDREF" use="required" />
     </xs:complexType>
 
+    <xs:element name="skybox">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="top" minOccurs="1" maxOccurs="1" />
+                <xs:element name="bottom" minOccurs="1" maxOccurs="1" />
+                <xs:element name="left" minOccurs="1" maxOccurs="1" />
+                <xs:element name="right" minOccurs="1" maxOccurs="1" />
+                <xs:element name="front" minOccurs="1" maxOccurs="1" />
+                <xs:element name="back" minOccurs="1" maxOccurs="1" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="skyboxRef">
+        <xs:complexType>
+            <xs:attribute name="skybox" type="xs:IDREF" use="required" />
+        </xs:complexType>
+    </xs:element>
+
     <xs:element name="objectDef">
         <xs:complexType>
             <xs:sequence>
@@ -94,6 +116,16 @@
                 <xs:element ref="script" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
             <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="cameraDef">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="position" minOccurs="0" />
+                <xs:element ref="rotation" minOccurs="0" />
+                <xs:element ref="script" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
         </xs:complexType>
     </xs:element>
 
@@ -136,9 +168,10 @@
     <xs:element name="graph">
         <xs:complexType>
             <xs:sequence>
+                <xs:element ref="skyboxRef" minOccurs="0" maxOccurs="1" />
                 <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
-                <xs:element ref="camera" minOccurs="0" />
+                <xs:element ref="camera" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -148,7 +181,7 @@
             <xs:sequence>
                 <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
-                <xs:element ref="camera" minOccurs="0" />
+                <xs:element ref="camera" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
             <xs:attribute name="name" type="xs:IDREF" use="required" />
         </xs:complexType>
@@ -160,24 +193,6 @@
                 <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
-
-            <xs:attribute name="position">
-                <xs:simpleType>
-                    <xs:restriction base="xs:string">
-                        <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-
-            <xs:attribute name="rotation">
-                <xs:simpleType>
-                    <xs:restriction base="xs:string">
-                        <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-
-
         </xs:complexType>
     </xs:element>
 

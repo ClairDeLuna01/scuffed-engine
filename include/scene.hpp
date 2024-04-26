@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "GLutils.hpp"
-#include "InputManager.hpp"
-#include "gameobject.hpp"
+#include "gameObject.hpp"
 #include "globals.hpp"
+#include "inputManager.hpp"
 #include "material.hpp"
 #include "mesh.hpp"
 #include "rapidxml/rapidxml.hpp"
@@ -29,6 +29,7 @@ class Scene
   private:
     std::deque<ShaderProgramPtr> shaders;
     std::deque<MaterialPtr> materials;
+    std::unordered_map<std::string, SkyboxPtr> skyboxes;
 
     constexpr static size_t MAX_LIGHTS = 10;
     Light lights[MAX_LIGHTS];
@@ -252,6 +253,56 @@ class Scene
 
                 gameObjects[objectName] = object;
             }
+            else if (name == "cameraDef")
+            {
+                for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
+                {
+                    std::string propName = prop->name();
+                    if (propName == "rotation")
+                    {
+                        camera->getTransform().setRotation(parseVec3(prop->value()));
+                    }
+                    else if (propName == "position")
+                    {
+                        camera->getTransform().setPosition(parseVec3(prop->value()));
+                    }
+                    else if (propName == "script")
+                    {
+                        std::string scriptClassName = prop->first_attribute("className")->value();
+                        ComponentPtr scriptComponent = camera->addComponent(scriptClassName);
+
+                        std::shared_ptr<Script> script = std::static_pointer_cast<Script>(scriptComponent);
+
+                        for (xml_attribute<> *attr = prop->first_attribute(); attr; attr = attr->next_attribute())
+                        {
+                            if (std::string(attr->name()) == "className")
+                                continue;
+
+                            bool rslt = script->Serialize(attr->name(), attr->value());
+                            if (!rslt)
+                            {
+                                std::cerr << "Error: Could not serialize property " << attr->name() << " with value "
+                                          << attr->value() << " for script " << scriptClassName << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (name == "skybox")
+            {
+                std::string skyboxName = child->first_attribute("name")->value();
+                std::string top = child->first_node("top")->first_attribute("path")->value();
+                std::string bottom = child->first_node("bottom")->first_attribute("path")->value();
+                std::string left = child->first_node("left")->first_attribute("path")->value();
+                std::string right = child->first_node("right")->first_attribute("path")->value();
+                std::string front = child->first_node("front")->first_attribute("path")->value();
+                std::string back = child->first_node("back")->first_attribute("path")->value();
+                CubeMapPtr cubeMap = loadCubeMap(std::array<std::string, 6>({right, left, top, bottom, front, back}));
+                ShaderProgramPtr skyboxShader =
+                    std::make_shared<ShaderProgram>("shader/skybox.vert", "shader/skybox.frag");
+                MaterialPtr skyboxMaterial = std::make_shared<Material>(skyboxShader);
+                scene->skyboxes[skyboxName] = std::make_shared<Skybox>(skyboxMaterial, cubeMap);
+            }
         }
 
         xml_node<> *graphNode = rootNode->first_node("graph");
@@ -333,6 +384,11 @@ class Scene
                         }
                     }
                     scene->lights[scene->lightCount++] = light;
+                }
+                else if (type == "skyboxRef")
+                {
+                    std::string skyboxName = child->first_attribute("skybox")->value();
+                    skybox = scene->skyboxes[skyboxName];
                 }
             }
         }
