@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 
-<?xml-model href="scene.dtd"?>
+<?xml-model href="scene.xsd"?>
 <scene name="TestScene">
     <ressources>
         <shader name="Unlit" vertex="shader/3D.vert" fragment="shader/unlit/texture.frag" />
-        <shader name="Planet" vertex="shader/3D.vert" fragment="shader/lit/planet.frag" />
+        <shader name="Planet" vertex="shader/3D.vert" fragment="shader/lit/texture.frag" />
         <shader name="EarthShader" vertex="shader/3D.vert" fragment="shader/lit/earth.frag" />
         <shader name="Lit" vertex="shader/3D.vert" fragment="shader/lit/basic.frag" />
 
-        <texture name="EarthDay" path="texture/2k_earth_daymap.jpg" />
-        <texture name="EarthNight" path="texture/2k_earth_nightmap.jpg" />
-        <texture name="MoonTex" path="texture/2k_moon.jpg" />
-        <texture name="SunTex" path="texture/2k_sun.jpg" />
+        <texture name="EarthDay" path="res/2k_earth_daymap.jpg" />
+        <texture name="EarthNight" path="res/2k_earth_nightmap.jpg" />
+        <texture name="MoonTex" path="res/2k_moon.jpg" />
+        <texture name="SunTex" path="res/2k_sun.jpg" />
 
-        <model name="Sphere" path="model/sphere.obj" />
-        <model name="Cube" path="model/cube.obj" />
+        <model name="Sphere" path="res/sphere.obj" />
+        <model name="Cube" path="res/cube.obj" />
 
         <LODmodel name="TerrainModel">
-            <LOD path="res/plane.obj" distance="0" />
-            <LOD path="res/plane.lod1.obj" distance="25" />
-            <LOD path="res/plane.lod2.obj" distance="35" />
-            <LOD path="res/plane.lod3.obj" distance="45" />
+            <LOD path="res/plane.obj" distance="35" />
+            <LOD path="res/plane.lod1.obj" distance="50" />
+            <LOD path="res/plane.lod2.obj" distance="75" />
+            <LOD path="res/plane.lod3.obj" distance="100" />
         </LODmodel>
 
         <material name="SunMat">
@@ -42,48 +42,46 @@
         </material>
 
         <objectDef name="Sun">
-            <modelRef model="Sphere" />
-            <materialRef material="SunMat" />
-            <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <modelRef model="Sphere" material="SunMat" />
+            <position>0 10 0</position>
+            <scale>2</scale>
+            <script className="SunScript" speed="0.025" />
         </objectDef>
 
         <objectDef name="Earth">
-            <modelRef model="Sphere" />
-            <materialRef material="EarthMat" />
-            <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <modelRef model="Sphere" material="EarthMat" />
+            <position>6 0 0</position>
+            <scale>.75</scale>
+            <script className="EarthScript" speed="0.015" />
         </objectDef>
 
         <objectDef name="Moon">
-            <modelRef model="Sphere" />
-            <materialRef material="MoonMat" />
-            <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <modelRef model="Sphere" material="MoonMat" />
+            <position>2 0 0</position>
+            <scale>.3</scale>
+            <script className="MoonScript" speed="0.005" />
         </objectDef>
 
         <objectDef name="Player">
             <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <scale>1</scale>
         </objectDef>
 
         <objectDef name="PlayerMesh">
-            <modelRef model="Cube" />
-            <materialRef material="BasicMat" />
+            <modelRef model="Cube" material="BasicMat" />
             <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <scale>1</scale>
         </objectDef>
 
         <objectDef name="Terrain">
-            <modelRef model="TerrainModel" />
-            <materialRef material="BasicMat" />
+            <modelRef model="TerrainModel" material="BasicMat" />
             <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <scale>1</scale>
         </objectDef>
 
         <objectDef name="Camera">
             <position>0 0 0</position>
-            <scale>1 1 1</scale>
+            <scale>1</scale>
         </objectDef>
 
     </ressources>
@@ -93,13 +91,19 @@
             <object name="Earth">
                 <object name="Moon" />
             </object>
+            <light position="0" color="1" intensity="1"></light>
         </object>
 
         <object name="Player">
-            <object name="Camera" />
             <object name="PlayerMesh" />
+
+            <camera />
         </object>
 
         <object name="Terrain" />
+
+        <light position="5 5 0" color="rgb(245 169 184)" intensity="0.75" />
+        <light position="-5 5 0" color="rgb(91 206 250)" intensity="0.75" />
+
     </graph>
 </scene>

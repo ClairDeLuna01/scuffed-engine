@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "shader.hpp"
-#include "transform3D.hpp"
 #include "texture.hpp"
+#include "transform3D.hpp"
 
-#include "globals.hpp"
 #include "component.hpp"
+#include "globals.hpp"
 
 using namespace EngineGlobals;
 
@@ -26,11 +26,12 @@ using namespace glm;
 
 class GameObject : public std::enable_shared_from_this<GameObject>
 {
-protected:
+  protected:
     std::vector<GameObjectPtr> children;
     GameObjectPtr parent = nullptr;
 
     Transform3D transform;
+    std::string name;
     mat4 objMat = mat4(1.0f);
     bool enabled = true;
 
@@ -38,10 +39,18 @@ protected:
 
     friend class Component;
 
-public:
-    GameObject() {}
+  public:
+    GameObject() : name("GameObject")
+    {
+    }
 
-    GameObject(Transform3D _transform) : transform(_transform) {}
+    GameObject(std::string name) : name(name)
+    {
+    }
+
+    GameObject(Transform3D _transform, std::string name = "") : transform(_transform), name(name)
+    {
+    }
 
     void addChild(GameObjectPtr child)
     {
@@ -128,12 +137,25 @@ public:
         return transform;
     }
 
-    template <typename T, typename... Args, std::enable_if_t<std::is_base_of<Component, T>::value && std::is_constructible<T, Args...>::value, bool> = true>
+    template <
+        typename T, typename... Args,
+        std::enable_if_t<std::is_base_of<Component, T>::value && std::is_constructible<T, Args...>::value, bool> = true>
     std::shared_ptr<T> addComponent(Args... args)
     {
         std::shared_ptr<T> component = std::make_shared<T>(args...);
         component->gameObject = shared_from_this();
         components.push_back(component);
+        return component;
+    }
+
+    ComponentPtr addComponent(std::string name)
+    {
+        ComponentPtr component = getComponentFactory().createComponent(name);
+        if (component)
+        {
+            component->gameObject = shared_from_this();
+            components.push_back(component);
+        }
         return component;
     }
 
@@ -156,6 +178,11 @@ public:
         {
             component->Start();
         }
+
+        for (auto &child : children)
+        {
+            child->Start();
+        }
     }
 
     void EarlyUpdate()
@@ -163,6 +190,11 @@ public:
         for (auto &component : components)
         {
             component->EarlyUpdate();
+        }
+
+        for (auto &child : children)
+        {
+            child->EarlyUpdate();
         }
     }
 
@@ -172,5 +204,45 @@ public:
         {
             component->LateUpdate();
         }
+
+        for (auto &child : children)
+        {
+            child->LateUpdate();
+        }
+    }
+
+    void print(u32 depth = 0)
+    {
+        for (u32 i = 0; i < depth; i++)
+        {
+            std::cout << "  ";
+        }
+        std::cout << name << std::endl;
+        for (auto &child : children)
+        {
+            child->print(depth + 1);
+        }
+    }
+
+    GameObjectPtr find(std::string name)
+    {
+        if (this->name == name)
+        {
+            return shared_from_this();
+        }
+        for (auto &child : children)
+        {
+            GameObjectPtr found = child->find(name);
+            if (found)
+            {
+                return found;
+            }
+        }
+        return nullptr;
+    }
+
+    std::string getName()
+    {
+        return name;
     }
 };

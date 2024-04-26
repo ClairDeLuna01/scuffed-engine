@@ -1,9 +1,9 @@
 #include "mesh.hpp"
 #include "assetLoader.hpp"
 
-#include <sstream>
-#include <fstream>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 #include <cstring>
 
@@ -30,21 +30,13 @@ void Mesh::setEBO(EBOptr &_ebo)
 
 void Mesh::bind()
 {
-    shader->use();
+    material->use();
     glBindVertexArray(vaoID);
     for (auto &vbo : vbos)
     {
         vbo.bind();
     }
     ebo->bind();
-
-    for (size_t i = 0; i < textures.size(); i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);
-        textures[i]->bind();
-
-        setUniform(UNIFORM_LOCATIONS::TEXTURE0 + i, (i32)i);
-    }
 }
 
 void Mesh::draw()
@@ -56,7 +48,7 @@ void Mesh::draw()
 
 void Mesh::unbind()
 {
-    shader->stop();
+    material->stop();
     ebo->unbind();
     for (auto &vbo : vbos)
     {
@@ -67,73 +59,65 @@ void Mesh::unbind()
 
 MeshPtr Mesh::addTexture(TexturePtr &texture)
 {
-    textures.push_back(texture);
+    material->addTexture(texture);
     return shared_from_this();
 }
 
 MeshPtr Mesh::addTexture(std::string filename)
 {
-    textures.push_back(loadTexture(filename.c_str()));
+    material->addTexture(loadTexture(filename.c_str()));
     return shared_from_this();
 }
 
-template <typename T, std::enable_if_t<
-                          std::is_same<T, mat4>::value ||
-                              std::is_same<T, vec3>::value ||
-                              std::is_same<T, vec4>::value ||
-                              std::is_same<T, f32>::value ||
-                              std::is_same<T, i32>::value ||
-                              std::is_same<T, u32>::value,
-                          bool>>
+template <typename T, std::enable_if_t<std::is_same<T, mat4>::value || std::is_same<T, vec3>::value ||
+                                           std::is_same<T, vec4>::value || std::is_same<T, f32>::value ||
+                                           std::is_same<T, i32>::value || std::is_same<T, u32>::value,
+                                       bool>>
 MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
-    shader->setUniform(location, value);
+    material->getShader()->setUniform(location, value);
     return shared_from_this();
 }
 
-template <typename T, std::enable_if_t<
-                          std::is_same<T, f64>::value, bool>>
+template <typename T, std::enable_if_t<std::is_same<T, f64>::value, bool>>
 MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
-    shader->setUniform(location, (f32)value);
+    material->getShader()->setUniform(location, (f32)value);
     return shared_from_this();
 }
 
-template <typename T, std::enable_if_t<
-                          std::is_same<T, i64>::value ||
-                              std::is_same<T, i16>::value ||
-                              std::is_same<T, i8>::value,
-                          bool>>
+template <
+    typename T,
+    std::enable_if_t<std::is_same<T, i64>::value || std::is_same<T, i16>::value || std::is_same<T, i8>::value, bool>>
 MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
-    shader->setUniform(location, (i32)value);
+    material->getShader()->setUniform(location, (i32)value);
     return shared_from_this();
 }
 
-template <typename T, std::enable_if_t<
-                          std::is_same<T, u64>::value ||
-                              std::is_same<T, u16>::value ||
-                              std::is_same<T, u8>::value,
-                          bool>>
+template <
+    typename T,
+    std::enable_if_t<std::is_same<T, u64>::value || std::is_same<T, u16>::value || std::is_same<T, u8>::value, bool>>
 MeshPtr Mesh::setUniform(u32 location, const T &value)
 {
-    shader->setUniform(location, (u32)value);
+    material->getShader()->setUniform(location, (u32)value);
     return shared_from_this();
 }
 
-void Mesh::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
+void Mesh::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices,
+                    std::vector<vec3> &normals, std::vector<vec2> &uvs)
 {
     loadMesh(path, indices, vertices, normals, uvs);
 }
 
-MeshPtr loadMesh(ShaderProgramPtr shader, std::string filename)
+MeshPtr loadMesh(MaterialPtr mat, std::string filename)
 {
-    return std::make_shared<Mesh>(shader, filename);
+    return std::make_shared<Mesh>(mat, filename);
 }
 
-SkyboxPtr loadSkybox(ShaderProgramPtr shader, CubeMapPtr cubeMap)
+SkyboxPtr loadSkybox(MaterialPtr mat, CubeMapPtr cubeMap)
 {
-    return std::make_shared<Skybox>(shader, cubeMap);
+    return std::make_shared<Skybox>(mat, cubeMap);
 }
 
 bool Mesh::meshIntersect(Ray r, vec3 &intersectionPoint, vec3 &normal) const

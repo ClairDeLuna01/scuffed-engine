@@ -13,10 +13,12 @@ ifeq ($(OS),Windows_NT)
 	EXEC = scuffed-engine.exe
 	RM = del /s /f /q
 	RUN = $(EXEC)
+	PYTHONEXE = python
 else
 	EXEC = scuffed-engine
 	RM = rm -f
 	RUN = ./$(EXEC)
+	PYTHONEXE = python3
 endif
 
 COLOR_RED = [0;31m
@@ -82,6 +84,7 @@ rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(su
 ODIR=obj
 IDIR=include
 SDIR=src
+SCRIPTDIR=scripts
 
 DEPDIR := .deps
 DEPFLAGS_BASE = -MT $@ -MMD -MP -MF $(DEPDIR)
@@ -91,6 +94,7 @@ DEPFLAGSMAIN = $(DEPFLAGS_BASE)/main.d
 SOURCES := $(call rwildcard,$(SDIR),*.cpp)
 OBJ := $(SOURCES:$(SDIR)/%.cpp=$(ODIR)/%.o)
 OBJ += $(ODIR)/main.o
+OBJ += $(ODIR)/scripts.o
 
 ifeq ($(OS),Windows_NT)
 	ECHO_COMMAND_QUOTATION_MARK =
@@ -111,6 +115,9 @@ default:
 	@$(MAKE) $(EXEC) -j8 -s
 	@$(call ECHO,$(call PRINT_SUCCESS,Build successful!))
 
+src/scripts.cpp: prepareScripts.py $(SCRIPTDIR)/*.cpp
+	@$(call ECHO,$(call PRINT_BUILD)	$(call PRINT_PATH,$@))
+	$(PYTHONEXE) prepareScripts.py
 
 obj/main.o : main.cpp
 obj/main.o : main.cpp 

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.1">
+
+    <xs:element name="scene">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="ressources" />
+                <xs:element ref="graph" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="ressources">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="shader" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="texture" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="model" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="LODmodel" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="material" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="objectDef" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="shader" type="shaderType" />
+
+    <xs:complexType name="shaderType">
+        <xs:attribute name="name" type="xs:ID" use="required" />
+        <xs:attribute name="vertex" type="xs:string" use="required" />
+        <xs:attribute name="fragment" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:element name="texture" type="textureType" />
+
+    <xs:complexType name="textureType">
+        <xs:attribute name="name" type="xs:ID" use="required" />
+        <xs:attribute name="path" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:element name="model" type="modelType" />
+
+    <xs:complexType name="modelType">
+        <xs:attribute name="name" type="xs:ID" use="required" />
+        <xs:attribute name="path" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:element name="LODmodel">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="LOD" minOccurs="1" maxOccurs="unbounded" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="LOD" type="LODType" />
+
+    <xs:complexType name="LODType">
+        <xs:attribute name="path" type="xs:string" use="required" />
+        <xs:attribute name="distance" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:element name="material">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="shaderRef" />
+                <xs:element ref="textureRef" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="shaderRef" type="shaderRefType" />
+
+    <xs:complexType name="shaderRefType">
+        <xs:attribute name="shader" type="xs:IDREF" use="required" />
+    </xs:complexType>
+
+    <xs:element name="textureRef" type="textureRefType" />
+
+    <xs:complexType name="textureRefType">
+        <xs:attribute name="texture" type="xs:IDREF" use="required" />
+    </xs:complexType>
+
+    <xs:element name="objectDef">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="modelRef" minOccurs="0" />
+                <xs:element ref="position" minOccurs="0" />
+                <xs:element ref="scale" minOccurs="0" />
+                <xs:element ref="rotation" minOccurs="0" />
+                <xs:element ref="script" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:ID" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="modelRef" type="modelRefType" />
+
+    <xs:complexType name="modelRefType">
+        <xs:attribute name="model" type="xs:IDREF" use="required" />
+        <xs:attribute name="material" type="xs:IDREF" use="required" />
+    </xs:complexType>
+
+    <xs:element name="position">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="scale">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:element name="rotation">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="script">
+        <xs:complexType>
+            <xs:attribute name="className" type="xs:string" use="required" />
+            <xs:anyAttribute processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="graph">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="camera" minOccurs="0" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="object">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="camera" minOccurs="0" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:IDREF" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="camera">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="object" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="light" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+
+            <xs:attribute name="position">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+
+            <xs:attribute name="rotation">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+
+
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="light">
+        <xs:complexType>
+            <xs:attribute name="position" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:pattern value="(-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="color" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:pattern
+                            value="((-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)|rgb\((-?\d*\.?\d+\s+){0,2}(-?\d*\.?\d+\s*)\)|#[0-9a-f]{6})" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="intensity" type="xs:decimal" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

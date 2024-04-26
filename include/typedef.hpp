@@ -41,8 +41,10 @@ typedef std::shared_ptr<GameObject> GameObjectPtr;
 typedef std::shared_ptr<Mesh> MeshPtr;
 typedef std::shared_ptr<Camera> CameraPtr;
 typedef std::shared_ptr<class CubeMap> CubeMapPtr;
+typedef std::shared_ptr<class Skybox> SkyboxPtr;
 
 CameraPtr createCamera();
+GameObjectPtr createGameObject(std::string name);
 GameObjectPtr createGameObject();
 
 typedef vec<3, u32, highp> uivec3;

@@ -4,12 +4,12 @@
 #include <type_traits>
 #include <vector>
 
-#include "shader.hpp"
-#include "typedef.hpp"
-#include "transform3D.hpp"
-#include "texture.hpp"
 #include "camera.hpp"
 #include "globals.hpp"
+#include "material.hpp"
+#include "texture.hpp"
+#include "transform3D.hpp"
+#include "typedef.hpp"
 
 #include "component.hpp"
 #include "gameObject.hpp"
@@ -36,7 +36,7 @@ struct Light
 
 class ElementBufferObject
 {
-private:
+  private:
     GLenum mode = GL_TRIANGLES;
     GLenum usage = GL_STATIC_DRAW;
 
@@ -57,12 +57,13 @@ private:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataLength * elementSize, data, GL_STATIC_DRAW);
     }
 
-public:
+  public:
     ElementBufferObject(void *_data, u64 _dataLength) : data(_data), dataLength(_dataLength)
     {
         genBuffer();
     }
-    ElementBufferObject(void *_data, u64 _dataLength, GLenum _type, u32 _elementSize, GLenum _usage, u64 _offset) : usage(_usage), data(_data), dataLength(_dataLength), type(_type), elementSize(_elementSize), offset(_offset)
+    ElementBufferObject(void *_data, u64 _dataLength, GLenum _type, u32 _elementSize, GLenum _usage, u64 _offset)
+        : usage(_usage), data(_data), dataLength(_dataLength), type(_type), elementSize(_elementSize), offset(_offset)
     {
         genBuffer();
     }
@@ -95,7 +96,7 @@ public:
 
 class VertexBufferObject
 {
-private:
+  private:
     GLint elementCount;
     u64 elementSize;
     GLuint location;
@@ -110,8 +111,11 @@ private:
 
     GLuint bufferID;
 
-public:
-    VertexBufferObject(GLint _elementCount, u64 _elementSize, GLuint _location, GLenum _type, void *_data, u64 _dataLength) : elementCount(_elementCount), elementSize(_elementSize), location(_location), type(_type), data(_data), dataLength(_dataLength)
+  public:
+    VertexBufferObject(GLint _elementCount, u64 _elementSize, GLuint _location, GLenum _type, void *_data,
+                       u64 _dataLength)
+        : elementCount(_elementCount), elementSize(_elementSize), location(_location), type(_type), data(_data),
+          dataLength(_dataLength)
     {
     }
 
@@ -122,7 +126,8 @@ public:
 
     inline void genBuffer()
     {
-        // go look there https://stackoverflow.com/questions/21652546/what-is-the-role-of-glbindvertexarrays-vs-glbindbuffer-and-what-is-their-relatio
+        // go look there
+        // https://stackoverflow.com/questions/21652546/what-is-the-role-of-glbindvertexarrays-vs-glbindbuffer-and-what-is-their-relatio
         glGenBuffers(1, &bufferID);
         if (bufferID == 0)
         {
@@ -165,27 +170,25 @@ typedef std::shared_ptr<class Mesh> MeshPtr;
 
 class Mesh : public Component, public std::enable_shared_from_this<Mesh>
 {
-protected:
-    ShaderProgramPtr shader;
+  protected:
+    MaterialPtr material;
 
     std::vector<VertexBufferObject> vbos;
     EBOptr ebo = nullptr;
 
     GLuint vaoID;
 
-    std::vector<TexturePtr> textures;
-
     std::vector<uivec3> indices;
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
     std::vector<vec2> uvs;
 
-public:
-    Mesh(ShaderProgramPtr _shader) : shader(_shader)
+  public:
+    Mesh(MaterialPtr _mat) : material(_mat)
     {
         glGenVertexArrays(1, &vaoID);
     }
-    Mesh(ShaderProgramPtr _shader, std::string filename) : shader(_shader)
+    Mesh(MaterialPtr _mat, std::string filename) : material(_mat)
     {
         glGenVertexArrays(1, &vaoID);
 
@@ -216,32 +219,23 @@ public:
 
     virtual void unbind();
 
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, mat4>::value ||
-                                  std::is_same<T, vec3>::value ||
-                                  std::is_same<T, vec4>::value ||
-                                  std::is_same<T, f32>::value ||
-                                  std::is_same<T, i32>::value ||
-                                  std::is_same<T, u32>::value,
-                              bool> = true>
+    template <typename T, std::enable_if_t<std::is_same<T, mat4>::value || std::is_same<T, vec3>::value ||
+                                               std::is_same<T, vec4>::value || std::is_same<T, f32>::value ||
+                                               std::is_same<T, i32>::value || std::is_same<T, u32>::value,
+                                           bool> = true>
     MeshPtr setUniform(u32 location, const T &value);
 
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, f64>::value, bool> = true>
+    template <typename T, std::enable_if_t<std::is_same<T, f64>::value, bool> = true>
     MeshPtr setUniform(u32 location, const T &value);
 
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, i64>::value ||
-                                  std::is_same<T, i16>::value ||
-                                  std::is_same<T, i8>::value,
-                              bool> = true>
+    template <typename T,
+              std::enable_if_t<std::is_same<T, i64>::value || std::is_same<T, i16>::value || std::is_same<T, i8>::value,
+                               bool> = true>
     MeshPtr setUniform(u32 location, const T &value);
 
-    template <typename T, std::enable_if_t<
-                              std::is_same<T, u64>::value ||
-                                  std::is_same<T, u16>::value ||
-                                  std::is_same<T, u8>::value,
-                              bool> = true>
+    template <typename T,
+              std::enable_if_t<std::is_same<T, u64>::value || std::is_same<T, u16>::value || std::is_same<T, u8>::value,
+                               bool> = true>
     MeshPtr setUniform(u32 location, const T &value);
 
     MeshPtr addTexture(TexturePtr &texture);
@@ -249,10 +243,10 @@ public:
 
     void bind(mat4 objMat)
     {
-        shader->use();
-        shader->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, objMat);
-        shader->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, getViewMatrix());
-        shader->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
+        material->use();
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, objMat);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, getViewMatrix());
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
 
         Mesh::bind();
     }
@@ -277,22 +271,25 @@ public:
     bool meshIntersect(Ray r, vec3 &intersectionPoint, vec3 &normal) const;
 
     // temporary until we set up assimp to load whole scenes at once
-    static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs);
+    static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices,
+                         std::vector<vec3> &normals, std::vector<vec2> &uvs);
 
     friend class GameObject;
 };
 
-MeshPtr loadMesh(ShaderProgramPtr shader, std::string filename);
+MeshPtr loadMesh(MaterialPtr mat, std::string filename);
 
 class LODMesh : public Component
 {
-private:
+  private:
     std::vector<MeshPtr> meshes;
     std::vector<f32> distances;
     u32 currentMesh = 0;
 
-public:
-    LODMesh(std::vector<MeshPtr> _meshes, std::vector<f32> _distances) : meshes(_meshes), distances(_distances) {}
+  public:
+    LODMesh(std::vector<MeshPtr> _meshes, std::vector<f32> _distances) : meshes(_meshes), distances(_distances)
+    {
+    }
 
     void Update() override
     {
@@ -319,11 +316,11 @@ public:
 
 class Skybox : public Mesh
 {
-private:
+  private:
     CubeMapPtr cubeMap;
 
-public:
-    Skybox(ShaderProgramPtr _shader, CubeMapPtr _cubeMap) : Mesh(_shader), cubeMap(_cubeMap)
+  public:
+    Skybox(MaterialPtr _mat, CubeMapPtr _cubeMap) : Mesh(_mat), cubeMap(_cubeMap)
     {
         glGenVertexArrays(1, &vaoID);
 
@@ -349,12 +346,12 @@ public:
 
     void bind() override
     {
-        shader->use();
+        material->use();
         mat4 view = getViewMatrix();
         view[3] = vec4(0, 0, 0, 1);
-        shader->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, view);
-        shader->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
-        shader->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, mat4(1.0f));
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, view);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, mat4(1.0f));
 
         glActiveTexture(GL_TEXTURE0);
         cubeMap->bind();
@@ -370,14 +367,16 @@ public:
     {
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
+        glDisable(GL_CULL_FACE);
         bind();
         ebo->draw();
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
+        glEnable(GL_CULL_FACE);
         unbind();
     }
 };
 
 typedef std::shared_ptr<Skybox> SkyboxPtr;
 
-SkyboxPtr loadSkybox(ShaderProgramPtr shader, CubeMapPtr cubeMap);
+SkyboxPtr loadSkybox(MaterialPtr mat, CubeMapPtr cubeMap);

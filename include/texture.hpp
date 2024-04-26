@@ -5,13 +5,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <array>
 #include <iostream>
 #include <string>
-#include <array>
 
 class Texture
 {
-private:
+  private:
     // image data
     i32 width, height, nrChannels;
     u8 *data;
@@ -21,10 +21,15 @@ private:
 
     void genTexture();
 
-public:
+  public:
     Texture(const char *path)
     {
         data = stbi_load(path, &width, &height, &nrChannels, 0);
+        if (!data)
+        {
+            std::cerr << "Failed to load texture at path: " << path << std::endl;
+            return;
+        }
         genTexture();
     }
 
@@ -72,17 +77,20 @@ TexturePtr loadTexture(const char *path);
 
 class Image
 {
-private:
+  private:
     i32 width, height, nrChannels;
     u8 *data;
 
-public:
+  public:
     Image(const char *path)
     {
         data = stbi_load(path, &width, &height, &nrChannels, 0);
     }
 
-    Image(u8 *_data, i32 _width, i32 _height, i32 _nrChannels) : width(_width), height(_height), nrChannels(_nrChannels), data(_data) {}
+    Image(u8 *_data, i32 _width, i32 _height, i32 _nrChannels)
+        : width(_width), height(_height), nrChannels(_nrChannels), data(_data)
+    {
+    }
 
     ~Image()
     {
@@ -139,7 +147,7 @@ public:
 
 class CubeMap
 {
-private:
+  private:
     std::array<u8 *, 6> faces;
     std::unique_ptr<Image> image;
     GLuint textureID;
@@ -150,7 +158,7 @@ private:
         SINGLE_FILE
     } loadType;
 
-public:
+  public:
     CubeMap(std::array<std::string, 6> faces_filenames)
     {
         loadType = LoadType::MULTIPLE_FILES;
@@ -164,9 +172,11 @@ public:
             if (faces[i])
             {
                 if (nrChannels == 3)
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, faces[i]);
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB,
+                                 GL_UNSIGNED_BYTE, faces[i]);
                 else if (nrChannels == 4)
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, faces[i]);
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                                 GL_UNSIGNED_BYTE, faces[i]);
                 else
                 {
                     std::cerr << "Unsupported number of channels: " << nrChannels << std::endl;
@@ -222,9 +232,11 @@ public:
         for (size_t i = 0; i < 6; i++)
         {
             if (nrChannels == 3)
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, faces[i]);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                             faces[i]);
             else if (nrChannels == 4)
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, faces[i]);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                             GL_UNSIGNED_BYTE, faces[i]);
             else
             {
                 std::cerr << "Unsupported number of channels: " << nrChannels << std::endl;

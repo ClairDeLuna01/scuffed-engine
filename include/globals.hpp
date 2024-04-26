@@ -9,24 +9,22 @@ using namespace glm;
 
 namespace EngineGlobals
 {
-    extern glm::ivec2 windowSize;
+extern glm::ivec2 windowSize;
 
-    extern mat4 projectionMatrix;
+extern mat4 projectionMatrix;
 
-    extern f32 deltaTime;
-    extern f32 lastFrame;
+extern f32 deltaTime;
+extern f32 lastFrame;
 
-    extern ivec2 clickPos;
+extern ivec2 clickPos;
 
-    extern GLFWwindow *window;
+extern GLFWwindow *window;
 
-    extern GameObjectPtr sceneRoot;
+extern GameObjectPtr sceneRoot;
 
-    extern CameraPtr camera;
+extern CameraPtr camera;
 
-    extern MeshPtr skybox;
+extern SkyboxPtr skybox;
 
-    extern UI *ui;
-
-    mat4 getViewMatrix();
-};
+mat4 getViewMatrix();
+}; // namespace EngineGlobals

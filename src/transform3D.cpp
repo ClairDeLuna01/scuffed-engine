@@ -1,6 +1,6 @@
-#include <transform3D.hpp>
-#include <iostream>
 #include "utils.hpp"
+#include <iostream>
+#include <transform3D.hpp>
 
 vec3 Transform3D::getPosition()
 {

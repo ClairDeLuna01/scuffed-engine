@@ -1,4 +1,6 @@
 #include "camera.hpp"
+#include "UI.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -229,7 +231,8 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
     // move mouse back to PressX, PressY
     // glfwSetCursorPos(window, pressX, pressY);
 
-    camera->transform.setPosition(vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
+    camera->transform.setPosition(
+        vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
     camera->lookAt(vec3(0));
 
     camera->needsUpdate = true;
@@ -238,7 +241,7 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
 
 void CameraInput::OrbitalCamera::orbitalInputMouse(GLFWwindow *window, u32 button, u32 action, u32 mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !getUI().getAnyWindowHovered())
     {
         mousePressed = true;
         // lock cursor
@@ -262,7 +265,8 @@ void CameraInput::OrbitalCamera::orbitalInputScroll(GLFWwindow *window, f64 xoff
     {
         radius = 1.0f;
     }
-    camera->transform.setPosition(vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
+    camera->transform.setPosition(
+        vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
     camera->lookAt(vec3(0));
     camera->needsUpdate = true;
     camera->updateObjectMatrix();
@@ -270,25 +274,25 @@ void CameraInput::OrbitalCamera::orbitalInputScroll(GLFWwindow *window, f64 xoff
 
 namespace EngineGlobals
 {
-    mat4 getViewMatrix()
-    {
-        return camera->getView();
-    }
+mat4 getViewMatrix()
+{
+    return camera->getView();
 }
+} // namespace EngineGlobals
 
 namespace CameraInput
 {
-    f64 lastX, lastY = -1;
-    f32 sensitivity = 0.01f;
-    namespace FlyCamera
-    {
-        bool forward, backward, left, right, up, down = false;
-        f32 speed = 0.1f;
-    }
+f64 lastX, lastY = -1;
+f32 sensitivity = 0.01f;
+namespace FlyCamera
+{
+bool forward, backward, left, right, up, down = false;
+f32 speed = 0.1f;
+} // namespace FlyCamera
 
-    namespace OrbitalCamera
-    {
-        f32 radius = 15.0f, angleX = 0.0f, angleY = 0.0f;
-        bool mousePressed = false;
-    }
-}
+namespace OrbitalCamera
+{
+f32 radius = 15.0f, angleX = 0.0f, angleY = 0.0f;
+bool mousePressed = false;
+} // namespace OrbitalCamera
+} // namespace CameraInput

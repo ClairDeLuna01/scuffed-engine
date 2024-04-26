@@ -15,6 +15,4 @@ GameObjectPtr EngineGlobals::sceneRoot = createGameObject();
 
 CameraPtr EngineGlobals::camera = createCamera();
 
-MeshPtr EngineGlobals::skybox = nullptr;
-
-UI *EngineGlobals::ui;
+SkyboxPtr EngineGlobals::skybox = nullptr;

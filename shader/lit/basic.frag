@@ -6,9 +6,18 @@ in vec3 fragPos;
 in vec3 normalDir;
 
 struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
+                     // base alignment  | aligned offset
+    vec3 position;   // 12 bytes        | 0
+    vec3 color;      // 12 bytes        | 16
+    float intensity; //  4 bytes        | 32
+                     // total: 32 bytes
+};
+
+layout(std140, binding = 0) uniform Lights {
+                           // base alignment  | aligned offset
+    Light lights[10];      // 320 bytes       | 0
+    int numLights;         //   4 bytes       | 320
+                           // total: 336 bytes
 };
 
 layout(location = 1) uniform mat4 model;
@@ -16,14 +25,12 @@ layout(location = 2) uniform mat4 view;
 layout(location = 3) uniform mat4 projection;
 layout(location = 4) uniform vec3 viewPos;
 
-layout(location = 750) uniform Light lights[4];
-
 void main() {
     vec3 baseColor = vec3(0.5);
     vec3 ambient = 0.2 * baseColor;
     vec3 color = vec3(0.0);
     vec3 specular = vec3(0.0);
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < numLights; i++) {
         Light light = lights[i];
         // compute diffuse
         vec3 norm = normalize(normalDir);
@@ -40,6 +47,9 @@ void main() {
         color += (diffuse + specular) * light.color;
     }
     vec3 result = clamp(color * baseColor + ambient, 0.0, 1.0);
+
+    // result = vec3(numLights);
+
     FragColor = vec4(result, 1.0);
 
     // FragColor = vec4(normalDir, 1.0);

@@ -5,6 +5,8 @@
 
 void glfw_error_callback(i32 error, const char *description)
 {
+    // if (error == 65537 && glfwWindowShouldClose(window))
+    //     return;
     fprintf(stderr, "GLFW Error: %s\n", description);
 }
 
@@ -96,13 +98,7 @@ std::ostream &operator<<(std::ostream &os, GLenum_t e)
     return os;
 }
 
-void printGLerror(
-    GLenum _source,
-    GLenum _type,
-    GLuint id,
-    GLenum _severity,
-    GLsizei length,
-    const GLchar *message)
+void printGLerror(GLenum _source, GLenum _type, GLuint id, GLenum _severity, GLsizei length, const GLchar *message)
 {
     GLenum_t severity(_severity);
     GLenum_t type(_type);
@@ -123,23 +119,15 @@ void printGLerror(
         color = &TERMINAL_WARNING;
     }
 
-    std::cerr
-        << TERMINAL_NOTIF << "\nGL CALLBACK " << *color << "[" << type << "]"
-        << TERMINAL_RESET << "\n\tid       = " << *color << id
-        << TERMINAL_RESET << "\n\tfrom     = " << *color << source
-        << TERMINAL_RESET << "\n\tseverity = " << *color << severity
-        << TERMINAL_RESET << "\n\tmessage  = " << *color << message
-        << "\n\n"
-        << TERMINAL_RESET;
+    std::cerr << TERMINAL_NOTIF << "\nGL CALLBACK " << *color << "[" << type << "]" << TERMINAL_RESET
+              << "\n\tid       = " << *color << id << TERMINAL_RESET << "\n\tfrom     = " << *color << source
+              << TERMINAL_RESET << "\n\tseverity = " << *color << severity << TERMINAL_RESET
+              << "\n\tmessage  = " << *color << message << "\n\n"
+              << TERMINAL_RESET;
 }
 
-void GLAPIENTRY MessageCallback(GLenum _source,
-                                GLenum _type,
-                                GLuint id,
-                                GLenum _severity,
-                                GLsizei length,
-                                const GLchar *message,
-                                const void *userParam)
+void GLAPIENTRY MessageCallback(GLenum _source, GLenum _type, GLuint id, GLenum _severity, GLsizei length,
+                                const GLchar *message, const void *userParam)
 {
     /*
         Historic that restrain message callback spam at each frame
@@ -223,7 +211,7 @@ void OpenGLInit()
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(MessageCallback, 0);
 
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetKeyCallback(window, InputManager::keyCallback);
