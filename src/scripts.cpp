@@ -11,7 +11,6 @@ class OrbitalCam : public Script
   public:
     void Start() override
     {
-        std::cout << "Orbital Camera Script Started" << std::endl;
         InputManager::addMouseButtonCallback(CameraInput::OrbitalCamera::orbitalInputMouse);
         InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
         InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
@@ -24,6 +23,38 @@ return false;
 
 };
 REGISTER_SCRIPT(OrbitalCam);
+#include "Physics.hpp"
+#include "UI.hpp"
+#include "component.hpp"
+#include "gameObject.hpp"
+#include "inputManager.hpp"
+#include "mesh.hpp"
+#include "scene.hpp"
+
+using namespace glm;
+
+class PhysicsSphere : public Script
+{
+  public:
+    
+    bool isStatic = false;
+
+    void Start() override
+    {
+        gameObject->addComponent<RigidBody>(isStatic ? 0.0f : 1.0f);
+        constexpr PhysicsMaterial material = {0.5f, 0.5f};
+        gameObject->addComponent<SphereCollider>(1.0f, material);
+    }
+virtual bool Serialize(const std::string& __name, const std::string& __value) override {
+
+REGISTER_PROPERTY(bool, isStatic);
+
+return false;
+
+}
+
+};
+REGISTER_SCRIPT(PhysicsSphere);
 #include "UI.hpp"
 #include "component.hpp"
 #include "gameObject.hpp"

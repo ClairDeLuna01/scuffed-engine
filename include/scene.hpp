@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "GLutils.hpp"
+#include "Physics.hpp"
 #include "gameObject.hpp"
 #include "globals.hpp"
 #include "inputManager.hpp"
@@ -445,10 +446,28 @@ class Scene
         root->EarlyUpdate();
         root->Update();
         root->LateUpdate();
+        FixedUpdateWrapper();
 
         if (skybox)
         {
             skybox->draw();
+        }
+    }
+
+    void FixedUpdate()
+    {
+        getPhysicsEngine()->Update();
+        root->FixedUpdate();
+    }
+
+    void FixedUpdateWrapper()
+    {
+        static f32 accumulator = 0.0f;
+        accumulator += deltaTime;
+        while (accumulator >= fixedDeltaTime)
+        {
+            FixedUpdate();
+            accumulator -= fixedDeltaTime;
         }
     }
 

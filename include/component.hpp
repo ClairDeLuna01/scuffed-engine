@@ -33,7 +33,7 @@ class Component
     virtual void Update() {};
     virtual void EarlyUpdate() {};
     virtual void LateUpdate() {};
-    // virtual void FixedUpdate() = 0;
+    virtual void FixedUpdate() {};
     virtual void Start() {};
 
     GameObjectPtr getGameObject()

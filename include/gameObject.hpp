@@ -169,6 +169,7 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         return component;
     }
 
+    // could be a problem is args is a string
     ComponentPtr addComponent(std::string name)
     {
         ComponentPtr component = getComponentFactory().createComponent(name);
@@ -229,6 +230,19 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         for (auto &child : children)
         {
             child->LateUpdate();
+        }
+    }
+
+    void FixedUpdate()
+    {
+        for (auto &component : components)
+        {
+            component->FixedUpdate();
+        }
+
+        for (auto &child : children)
+        {
+            child->FixedUpdate();
         }
     }
 

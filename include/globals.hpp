@@ -14,6 +14,7 @@ extern glm::ivec2 windowSize;
 extern mat4 projectionMatrix;
 
 extern f32 deltaTime;
+extern f32 fixedDeltaTime;
 extern f32 lastFrame;
 
 extern ivec2 clickPos;

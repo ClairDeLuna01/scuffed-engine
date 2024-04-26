@@ -80,6 +80,20 @@
             <scale>1</scale>
         </objectDef>
 
+        <objectDef name="Sphere1">
+            <modelRef model="Sphere" material="BasicMat" />
+            <position>0 5 0</position>
+            <scale>1</scale>
+            <script className="PhysicsSphere" isStatic="false" />
+        </objectDef>
+
+        <objectDef name="Sphere2">
+            <modelRef model="Sphere" material="BasicMat" />
+            <position>-0 0 0</position>
+            <scale>1</scale>
+            <script className="PhysicsSphere" isStatic="true" />
+        </objectDef>
+
         <cameraDef>
             <position>0 0 10</position>
             <rotation>0 0 0</rotation>
@@ -113,6 +127,9 @@
         </object>
 
         <object name="Terrain" />
+
+        <object name="Sphere1" />
+        <object name="Sphere2" />
 
         <light position="5 5 0" color="rgb(245 169 184)" intensity="0.75" />
         <light position="-5 5 0" color="rgb(91 206 250)" intensity="0.75" />
