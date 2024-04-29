@@ -304,7 +304,7 @@ class LODMesh : public Component
                 return;
             }
         }
-        currentMesh = distances.size();
+        currentMesh = distances.size() - 1;
         meshes.back()->Update(getGameObject()->getObjectMatrix());
     }
 
