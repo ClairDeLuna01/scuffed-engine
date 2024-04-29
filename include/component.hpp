@@ -85,11 +85,12 @@ ComponentFactory &getComponentFactory();
     }
 
 // Property registration and value setting macro
+template <typename T> bool setProperty(const std::string &value, T &property);
+
 #define REGISTER_PROPERTY(TYPE, PROPERTY)                                                                              \
     if (__name == #PROPERTY)                                                                                           \
     {                                                                                                                  \
-        std::istringstream iss(__value);                                                                               \
-        iss >> PROPERTY;                                                                                               \
+        setProperty<TYPE>(__value, PROPERTY);                                                                          \
         return true;                                                                                                   \
     }
 

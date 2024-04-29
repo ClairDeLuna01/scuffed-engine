@@ -16,7 +16,8 @@ class PhysicsSphere : public Script
 
     void Start() override
     {
-        gameObject->addComponent<RigidBody>(isStatic ? 0.0f : 1.0f);
+        RigidBodyPtr rb = gameObject->addComponent<RigidBody>(1.0f);
+        rb->isStatic = isStatic;
         constexpr PhysicsMaterial material = {0.5f, 0.5f};
         gameObject->addComponent<SphereCollider>(1.0f, material);
     }

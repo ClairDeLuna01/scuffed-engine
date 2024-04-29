@@ -15,7 +15,7 @@ struct PhysicsMaterial
 };
 
 using PhysicsEnginePtr = std::shared_ptr<class PhysicsEngine>;
-using RigidBodyPtr = std::shared_ptr<RigidBody>;
+using RigidBodyPtr = std::shared_ptr<class RigidBody>;
 
 using ColliderPtr = std::shared_ptr<class Collider>;
 using SphereColliderPtr = std::shared_ptr<class SphereCollider>;
@@ -49,11 +49,7 @@ class PhysicsEngine
     void handleCollision(ColliderPtr collider, ColliderPtr other);
 };
 
-PhysicsEnginePtr getPhysicsEngine()
-{
-    static PhysicsEnginePtr physicsEngine = std::make_shared<PhysicsEngine>();
-    return physicsEngine;
-}
+PhysicsEnginePtr getPhysicsEngine();
 
 class RigidBody : public Component, public std::enable_shared_from_this<RigidBody>
 {
@@ -62,12 +58,12 @@ class RigidBody : public Component, public std::enable_shared_from_this<RigidBod
     glm::vec3 acceleration;
     glm::vec3 force;
     f32 mass;
-    bool isStatic = false;
 
   public:
+    bool isStatic = false;
     RigidBody(f32 mass) : mass(mass)
     {
-        if (mass >= 0.0f)
+        if (mass <= 0.0f)
         {
             isStatic = true;
         }
@@ -82,13 +78,17 @@ class RigidBody : public Component, public std::enable_shared_from_this<RigidBod
     {
         if (isStatic)
         {
+            // std::cout << "Static object" << std::endl;
             return;
         }
+
         acceleration = force / mass;
         velocity += acceleration * EngineGlobals::fixedDeltaTime;
         gameObject->setTransform(gameObject->getTransform().translateBy(velocity));
 
-        force = glm::vec3(0.0f, -9.81f, 0.0f);
+        // std::cout << gameObject->getTransform().getPosition() << std::endl;
+
+        force = glm::vec3(0.0f, -0.005f, 0.0f);
     }
 
     void addForce(glm::vec3 _force)
@@ -164,6 +164,7 @@ class Collider : public Component, public std::enable_shared_from_this<Collider>
             return checkCollision(std::dynamic_pointer_cast<BoxCollider>(other));
             break;
         }
+        return false;
     }
     virtual bool checkCollision(SphereColliderPtr other) = 0;
     virtual bool checkCollision(BoxColliderPtr other) = 0;

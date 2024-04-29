@@ -97,7 +97,7 @@
         <cameraDef>
             <position>0 0 10</position>
             <rotation>0 0 0</rotation>
-            <script className="OrbitalCam" />
+            <script className="OrbitalCam" enableGUI="false" />
         </cameraDef>
 
         <skybox name="blueSky">

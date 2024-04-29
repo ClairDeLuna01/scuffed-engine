@@ -18,13 +18,17 @@ void PhysicsEngine::handleCollision(ColliderPtr collider, ColliderPtr other)
         glm::vec3 relativeVelocity = rigidBody1->getVelocity() - rigidBody2->getVelocity();
 
         // Calculate the impulse magnitude
-        f32 impulseMagnitude = -(1.0f + collider->getMaterial().restitution) *
-                               glm::dot(relativeVelocity, collisionNormal) /
-                               (1.0f / rigidBody1->getMass() + 1.0f / rigidBody2->getMass());
+        f32 impulseMagnitude = glm::dot(-relativeVelocity, collisionNormal) * (1 + collider->material.restitution) /
+                               (1 / rigidBody1->getMass() + 1 / rigidBody2->getMass());
+
+        if (rigidBody1->isStatic || rigidBody2->isStatic)
+        {
+            impulseMagnitude *= 2;
+        }
 
         // Apply the impulse to the rigid bodies
-        rigidBody1->setVelocity(rigidBody1->getVelocity() + impulseMagnitude / rigidBody1->getMass() * collisionNormal);
-        rigidBody2->setVelocity(rigidBody2->getVelocity() - impulseMagnitude / rigidBody2->getMass() * collisionNormal);
+        rigidBody1->addForce(impulseMagnitude * collisionNormal);
+        rigidBody2->addForce(-impulseMagnitude * collisionNormal);
     }
     else if (collider->type == ColliderType::SPHERE && other->type == ColliderType::BOX)
     {
@@ -50,6 +54,8 @@ void PhysicsEngine::Update()
         rigidBody->FixedUpdate();
     }
 
+    // std::cout << std::endl << std::endl;
+
     for (auto &collider : colliders)
     {
         for (auto &other : colliders)
@@ -63,4 +69,10 @@ void PhysicsEngine::Update()
             }
         }
     }
+}
+
+PhysicsEnginePtr getPhysicsEngine()
+{
+    static PhysicsEnginePtr physicsEngine = std::make_shared<PhysicsEngine>();
+    return physicsEngine;
 }

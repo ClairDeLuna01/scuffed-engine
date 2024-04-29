@@ -8,14 +8,31 @@
 
 class OrbitalCam : public Script
 {
+    
+    bool enableGUI = false;
+
   public:
     void Start() override
     {
         InputManager::addMouseButtonCallback(CameraInput::OrbitalCamera::orbitalInputMouse);
         InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
         InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
+        InputManager::addStepCallback(CameraInput::OrbitalCamera::orbitalInputStep);
+
+        if (enableGUI)
+        {
+            auto window = getUI().add_window("Orbital Camera", {});
+            window->add_watcher("radius", &CameraInput::OrbitalCamera::radius, UIWindow::WatcherMode::DRAG, 0, 100,
+                                0.1f);
+            window->add_watcher("angleX", &CameraInput::OrbitalCamera::angleX, UIWindow::WatcherMode::DRAG, 0, 0, 0.1f);
+            f32 angleLimit = M_PI / 2 * 0.99;
+            window->add_watcher("angleY", &CameraInput::OrbitalCamera::angleY, UIWindow::WatcherMode::DRAG, -angleLimit,
+                                angleLimit, 0.1f);
+        }
     }
 virtual bool Serialize(const std::string& __name, const std::string& __value) override {
+
+REGISTER_PROPERTY(bool, enableGUI);
 
 return false;
 
@@ -23,38 +40,129 @@ return false;
 
 };
 REGISTER_SCRIPT(OrbitalCam);
-#include "Physics.hpp"
+
 #include "UI.hpp"
 #include "component.hpp"
 #include "gameObject.hpp"
-#include "inputManager.hpp"
 #include "mesh.hpp"
-#include "scene.hpp"
 
-using namespace glm;
-
-class PhysicsSphere : public Script
+class SunScript : public Script
 {
-  public:
+  private:
     
-    bool isStatic = false;
+    float speed = 0.02f;
+
+  public:
+    static UIWindowPtr window;
+
+    SunScript()
+    {
+    }
 
     void Start() override
     {
-        gameObject->addComponent<RigidBody>(isStatic ? 0.0f : 1.0f);
-        constexpr PhysicsMaterial material = {0.5f, 0.5f};
-        gameObject->addComponent<SphereCollider>(1.0f, material);
+        if (!window)
+        {
+            window = getUI().add_window("Solar System", {});
+        }
+        window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1, 0.01f);
     }
+
+    void Update() override
+    {
+        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
+    }
+
+    friend class EarthScript;
+    friend class MoonScript;
 virtual bool Serialize(const std::string& __name, const std::string& __value) override {
 
-REGISTER_PROPERTY(bool, isStatic);
+REGISTER_PROPERTY(float, speed);
 
 return false;
 
 }
 
 };
-REGISTER_SCRIPT(PhysicsSphere);
+REGISTER_SCRIPT(SunScript);
+
+UIWindowPtr SunScript::window = nullptr;
+
+class EarthScript : public Script
+{
+  private:
+    
+    float speed = 0.015f;
+    MeshPtr mesh;
+    GameObjectPtr sun;
+
+  public:
+    EarthScript()
+    {
+    }
+
+    void Start() override
+    {
+
+        SunScript::window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1,
+                                       0.01f);
+        mesh = gameObject->getComponent<Mesh>();
+        sun = getGameObject()->getParent();
+    }
+
+    void Update() override
+    {
+        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
+        mesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, vec3(gameObject->getObjectMatrix()[3]));
+    }
+virtual bool Serialize(const std::string& __name, const std::string& __value) override {
+
+REGISTER_PROPERTY(float, speed);
+
+return false;
+
+}
+
+};
+REGISTER_SCRIPT(EarthScript);
+
+class MoonScript : public Script
+{
+  private:
+    
+    float speed = 0.05f;
+    MeshPtr mesh;
+    GameObjectPtr sun;
+
+  public:
+    MoonScript()
+    {
+    }
+
+    void Start() override
+    {
+        SunScript::window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1,
+                                       0.01f);
+        mesh = gameObject->getComponent<Mesh>();
+        sun = getGameObject()->getParent()->getParent();
+    }
+
+    void Update() override
+    {
+        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
+        mesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, vec3(gameObject->getObjectMatrix()[3]));
+    }
+virtual bool Serialize(const std::string& __name, const std::string& __value) override {
+
+REGISTER_PROPERTY(float, speed);
+
+return false;
+
+}
+
+};
+REGISTER_SCRIPT(MoonScript);
+
 #include "UI.hpp"
 #include "component.hpp"
 #include "gameObject.hpp"
@@ -252,125 +360,36 @@ return false;
 
 };
 REGISTER_SCRIPT(PlayerController);
+#include "Physics.hpp"
 #include "UI.hpp"
 #include "component.hpp"
 #include "gameObject.hpp"
+#include "inputManager.hpp"
 #include "mesh.hpp"
+#include "scene.hpp"
 
-class SunScript : public Script
+using namespace glm;
+
+class PhysicsSphere : public Script
 {
-  private:
-    
-    float speed = 0.02f;
-
   public:
-    static UIWindowPtr window;
-
-    SunScript()
-    {
-    }
+    
+    bool isStatic = false;
 
     void Start() override
     {
-        if (!window)
-        {
-            window = getUI().add_window("Solar System", {});
-        }
-        window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1, 0.01f);
+        RigidBodyPtr rb = gameObject->addComponent<RigidBody>(1.0f);
+        rb->isStatic = isStatic;
+        constexpr PhysicsMaterial material = {0.5f, 0.5f};
+        gameObject->addComponent<SphereCollider>(1.0f, material);
     }
-
-    void Update() override
-    {
-        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
-    }
-
-    friend class EarthScript;
-    friend class MoonScript;
 virtual bool Serialize(const std::string& __name, const std::string& __value) override {
 
-REGISTER_PROPERTY(float, speed);
+REGISTER_PROPERTY(bool, isStatic);
 
 return false;
 
 }
 
 };
-REGISTER_SCRIPT(SunScript);
-
-UIWindowPtr SunScript::window = nullptr;
-
-class EarthScript : public Script
-{
-  private:
-    
-    float speed = 0.015f;
-    MeshPtr mesh;
-    GameObjectPtr sun;
-
-  public:
-    EarthScript()
-    {
-    }
-
-    void Start() override
-    {
-
-        SunScript::window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1,
-                                       0.01f);
-        mesh = gameObject->getComponent<Mesh>();
-        sun = getGameObject()->getParent();
-    }
-
-    void Update() override
-    {
-        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
-        mesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, vec3(gameObject->getObjectMatrix()[3]));
-    }
-virtual bool Serialize(const std::string& __name, const std::string& __value) override {
-
-REGISTER_PROPERTY(float, speed);
-
-return false;
-
-}
-
-};
-REGISTER_SCRIPT(EarthScript);
-
-class MoonScript : public Script
-{
-  private:
-    
-    float speed = 0.05f;
-    MeshPtr mesh;
-    GameObjectPtr sun;
-
-  public:
-    MoonScript()
-    {
-    }
-
-    void Start() override
-    {
-        SunScript::window->add_watcher(gameObject->getName() + " Speed", &speed, UIWindow::WatcherMode::DRAG, -1, 1,
-                                       0.01f);
-        mesh = gameObject->getComponent<Mesh>();
-        sun = getGameObject()->getParent()->getParent();
-    }
-
-    void Update() override
-    {
-        gameObject->setTransform(gameObject->getTransform().rotateBy(vec3(0, speed, 0)));
-        mesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, vec3(gameObject->getObjectMatrix()[3]));
-    }
-virtual bool Serialize(const std::string& __name, const std::string& __value) override {
-
-REGISTER_PROPERTY(float, speed);
-
-return false;
-
-}
-
-};
-REGISTER_SCRIPT(MoonScript);
-
+REGISTER_SCRIPT(PhysicsSphere);

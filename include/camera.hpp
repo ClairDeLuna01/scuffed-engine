@@ -28,6 +28,7 @@ extern bool mousePressed;
 void orbitalInputCursor(GLFWwindow *, f64, f64);
 void orbitalInputMouse(GLFWwindow *, u32, u32, u32);
 void orbitalInputScroll(GLFWwindow *, f64, f64);
+void orbitalInputStep(GLFWwindow *, f32);
 } // namespace OrbitalCamera
 } // namespace CameraInput
 
@@ -41,7 +42,7 @@ class Camera : public GameObject
     bool needsUpdate;
     Camera();
 
-    Transform3D getTransform();
+    Transform3D &getTransform();
 
     mat4 getView();
 

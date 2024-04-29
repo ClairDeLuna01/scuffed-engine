@@ -34,6 +34,7 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     std::string name;
     mat4 objMat = mat4(1.0f);
     bool enabled = true;
+    bool started = false;
 
     std::vector<ComponentPtr> components;
 
@@ -166,6 +167,10 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         std::shared_ptr<T> component = std::make_shared<T>(args...);
         component->gameObject = shared_from_this();
         components.push_back(component);
+        if (started)
+        {
+            component->Start();
+        }
         return component;
     }
 
@@ -177,6 +182,10 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         {
             component->gameObject = shared_from_this();
             components.push_back(component);
+            if (started)
+            {
+                component->Start();
+            }
         }
         return component;
     }
@@ -196,6 +205,7 @@ class GameObject : public std::enable_shared_from_this<GameObject>
 
     void Start()
     {
+        started = true;
         for (auto &component : components)
         {
             component->Start();

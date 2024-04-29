@@ -10,7 +10,7 @@ Camera::Camera() : GameObject("Camera")
 {
 }
 
-Transform3D Camera::getTransform()
+Transform3D &Camera::getTransform()
 {
     return transform;
 }
@@ -215,7 +215,7 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
     }
 
     f32 xoffset = lastX - xpos;
-    f32 yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    f32 yoffset = lastY - ypos;
 
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -230,8 +230,11 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
 
     // move mouse back to PressX, PressY
     // glfwSetCursorPos(window, pressX, pressY);
+}
 
-    camera->transform.setPosition(
+void CameraInput::OrbitalCamera::orbitalInputStep(GLFWwindow *window, f32 deltaTime)
+{
+    camera->getTransform().setPosition(
         vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
     camera->lookAt(vec3(0));
 
@@ -282,7 +285,7 @@ mat4 getViewMatrix()
 
 namespace CameraInput
 {
-f64 lastX, lastY = -1;
+f64 lastX = -1, lastY = -1;
 f32 sensitivity = 0.01f;
 namespace FlyCamera
 {
