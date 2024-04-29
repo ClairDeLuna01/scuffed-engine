@@ -8,6 +8,10 @@
 #include "globals.hpp"
 #include "typedef.hpp"
 
+#define USE_REACTPHYSICS
+
+#ifndef USE_REACTPHYSICS
+
 struct PhysicsMaterial
 {
     f32 restitution;
@@ -238,3 +242,19 @@ class BoxCollider : public Collider
         return false;
     }
 };
+#else
+#include <reactphysics3d/reactphysics3d.h>
+
+reactphysics3d::PhysicsCommon &getPhysicsCommon();
+reactphysics3d::PhysicsWorld *getPhysicsWorld();
+
+class PhysicsEngine
+{
+  public:
+    void Update();
+};
+
+using PhysicsEnginePtr = std::shared_ptr<class PhysicsEngine>;
+
+PhysicsEnginePtr getPhysicsEngine();
+#endif

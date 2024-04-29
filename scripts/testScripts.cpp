@@ -5,7 +5,9 @@
 #include "inputManager.hpp"
 #include "mesh.hpp"
 #include "scene.hpp"
+#include <reactphysics3d/reactphysics3d.h>
 
+using namespace reactphysics3d;
 using namespace glm;
 
 class PhysicsSphere : public Script
@@ -14,11 +16,18 @@ class PhysicsSphere : public Script
     [[Serialize]]
     bool isStatic = false;
 
+    RigidBody *rb;
+
     void Start() override
     {
-        RigidBodyPtr rb = gameObject->addComponent<RigidBody>(1.0f);
-        rb->isStatic = isStatic;
-        constexpr PhysicsMaterial material = {0.5f, 0.5f};
-        gameObject->addComponent<SphereCollider>(1.0f, material);
+        rb = getPhysicsWorld()->createRigidBody(gameObject->getTransform());
+        rb->setType(isStatic ? BodyType::STATIC : BodyType::DYNAMIC);
+        SphereShape *shape = getPhysicsCommon().createSphereShape(1.0f);
+        rb->addCollider(shape, Transform::identity());
+    }
+
+    void Update() override
+    {
+        gameObject->setTransform(rb->getTransform());
     }
 };

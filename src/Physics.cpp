@@ -1,5 +1,6 @@
 #include "Physics.hpp"
 
+#ifndef USE_REACTPHYSICS
 void PhysicsEngine::handleCollision(ColliderPtr collider, ColliderPtr other)
 {
     // Get the rigid bodies associated with the colliders
@@ -76,3 +77,28 @@ PhysicsEnginePtr getPhysicsEngine()
     static PhysicsEnginePtr physicsEngine = std::make_shared<PhysicsEngine>();
     return physicsEngine;
 }
+#else
+reactphysics3d::PhysicsCommon &getPhysicsCommon()
+{
+    static reactphysics3d::PhysicsCommon physicsCommon;
+    return physicsCommon;
+}
+
+reactphysics3d::PhysicsWorld *getPhysicsWorld()
+{
+    static reactphysics3d::PhysicsWorld *world = getPhysicsCommon().createPhysicsWorld();
+    return world;
+}
+
+void PhysicsEngine::Update()
+{
+    getPhysicsWorld()->update(EngineGlobals::fixedDeltaTime);
+}
+
+PhysicsEnginePtr getPhysicsEngine()
+{
+    static PhysicsEnginePtr physicsEngine = std::make_shared<PhysicsEngine>();
+    return physicsEngine;
+}
+
+#endif

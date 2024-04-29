@@ -7,6 +7,7 @@
 #include "imgui/imgui.h"
 #include "inputManager.hpp"
 #include "mesh.hpp"
+#include "reactphysics3d/reactphysics3d.h"
 #include "scene.hpp"
 #include "shader.hpp"
 #include "texture.hpp"
@@ -28,6 +29,8 @@ i32 main()
     u64 i = 0;
 
     scene = Scene::Load("scenes/scene.xml");
+
+    getPhysicsWorld()->setGravity(reactphysics3d::Vector3(0.0f, -9.81f, 0.0f));
 
     scene->Start();
     while (!glfwWindowShouldClose(window))

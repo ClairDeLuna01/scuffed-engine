@@ -108,7 +108,7 @@ class PlayerController : public Script
             gameObject->setTransform(gameObject->getTransform().translateBy(cameraRight * speed));
         }
 
-        Ray r = {gameObject->getTransform().getPosition() + vec3(0.0f, 100.0f, 0.0f), vec3(0.0f, -1.0f, 0.0f)};
+        ::Ray r = {gameObject->getTransform().getPosition() + vec3(0.0f, 100.0f, 0.0f), vec3(0.0f, -1.0f, 0.0f)};
         vec3 intersectionPoint;
         vec3 normal;
         if (planeObject->getComponent<LODMesh>()->getCurrentMesh()->meshIntersect(r, intersectionPoint, normal))

@@ -14,6 +14,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <reactphysics3d/reactphysics3d.h>
+
 using namespace glm;
 
 #include <GL/glew.h>
@@ -57,6 +59,30 @@ inline std::string stripPath(std::string src)
     }
 
     return src.substr(lastSlashIndex + 1);
+}
+
+// reactphysics Vector3 to glm vec3
+inline vec3 toVec3(const reactphysics3d::Vector3 &v)
+{
+    return vec3(v.x, v.y, v.z);
+}
+
+// reactphysics Quaternion to glm quat
+inline quat toQuat(const reactphysics3d::Quaternion &q)
+{
+    return quat(q.w, q.x, q.y, q.z);
+}
+
+// glm vec3 to reactphysics Vector3
+inline reactphysics3d::Vector3 toVec3(const vec3 &v)
+{
+    return reactphysics3d::Vector3(v.x, v.y, v.z);
+}
+
+// glm quat to reactphysics Quaternion
+inline reactphysics3d::Quaternion toQuat(const quat &q)
+{
+    return reactphysics3d::Quaternion(q.x, q.y, q.z, q.w);
 }
 
 inline std::string getExtension(std::string src)
@@ -129,6 +155,7 @@ inline std::ostream &operator<<(std::ostream &os, const mat4 &m)
     os << "]";
     return os;
 }
+
 } // namespace glm
 
 enum UNIFORM_LOCATIONS : GLint

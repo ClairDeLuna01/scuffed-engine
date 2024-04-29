@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp
 	LINKFLAGS =  
 else
-	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp 
+	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp -lreactphysics3d
 	LINKFLAGS = 
 endif
 
