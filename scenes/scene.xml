@@ -43,7 +43,7 @@
 
         <objectDef name="Sun">
             <modelRef model="Sphere" material="SunMat" />
-            <position>0 10 0</position>
+            <position>0 100 0</position>
             <scale>2</scale>
             <script className="SunScript" speed="0.025" />
         </objectDef>
