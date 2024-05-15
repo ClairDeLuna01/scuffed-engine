@@ -10,8 +10,9 @@
 
 #include "component.hpp"
 #include "globals.hpp"
+#include "material.hpp"
 
-using namespace EngineGlobals;
+// using namespace EngineGlobals;
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -37,6 +38,8 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     bool started = false;
 
     std::vector<ComponentPtr> components;
+
+    ComponentPtr mesh = nullptr;
 
     friend class Component;
 
@@ -154,17 +157,55 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         }
     }
 
+    void draw()
+    {
+        if (!enabled)
+            return;
+
+        if (mesh)
+            mesh->Update();
+
+        for (auto &child : children)
+        {
+            child->draw();
+        }
+    }
+
+    void drawShadowMap()
+    {
+        if (!enabled)
+            return;
+
+        if (mesh)
+            mesh->Update();
+
+        for (auto &child : children)
+        {
+            child->drawShadowMap();
+        }
+    }
+
     Transform3D &getTransform()
     {
         return transform;
     }
 
+    // normal addComponent
     template <
         typename T, typename... Args,
         std::enable_if_t<std::is_base_of<Component, T>::value && std::is_constructible<T, Args...>::value, bool> = true>
     std::shared_ptr<T> addComponent(Args... args)
     {
         std::shared_ptr<T> component = std::make_shared<T>(args...);
+        if (std::is_same<T, Mesh>::value)
+        {
+            if (mesh)
+            {
+                std::cerr << "Error: GameObject already has a mesh component" << std::endl;
+                return nullptr;
+            }
+            mesh = component;
+        }
         component->gameObject = shared_from_this();
         components.push_back(component);
         if (started)
@@ -173,6 +214,9 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         }
         return component;
     }
+
+    // component ptr addComponent
+    ComponentPtr addComponent(ComponentPtr component);
 
     // could be a problem is args is a string
     ComponentPtr addComponent(std::string name)
@@ -190,12 +234,26 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         return component;
     }
 
-    template <typename T, std::enable_if_t<std::is_base_of<Component, T>::value, bool> = true>
+    template <typename T,
+              std::enable_if_t<std::is_base_of<Component, T>::value && !std::is_base_of<Script, T>::value, bool> = true>
     std::shared_ptr<T> getComponent()
     {
         for (auto &component : components)
         {
-            if (std::dynamic_pointer_cast<T>(component))
+            if (component->getID() == T::getStaticID())
+            {
+                return std::dynamic_pointer_cast<T>(component);
+            }
+        }
+        return nullptr;
+    }
+
+    template <typename T, std::enable_if_t<std::is_base_of<Script, T>::value, bool> = true>
+    std::shared_ptr<T> getScript()
+    {
+        for (auto &component : components)
+        {
+            if (component->getID() == Script::getStaticID() && std::dynamic_pointer_cast<T>(component) != nullptr)
             {
                 return std::dynamic_pointer_cast<T>(component);
             }
@@ -214,6 +272,19 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         for (auto &child : children)
         {
             child->Start();
+        }
+    }
+
+    void LateStart()
+    {
+        for (auto &component : components)
+        {
+            component->LateStart();
+        }
+
+        for (auto &child : children)
+        {
+            child->LateStart();
         }
     }
 
@@ -284,6 +355,11 @@ class GameObject : public std::enable_shared_from_this<GameObject>
             }
         }
         return nullptr;
+    }
+
+    std::vector<GameObjectPtr> getChildren()
+    {
+        return children;
     }
 
     std::string getName()

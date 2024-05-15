@@ -57,7 +57,8 @@ class UIWindow
     {
         INPUT = 0,
         SLIDER = 1,
-        DRAG = 2
+        DRAG = 2,
+        READONLY = 3
     };
     void add_watcher(const std::string &name, i32 *value, WatcherMode mode = WatcherMode::INPUT, i32 min = 0,
                      i32 max = 100, i32 step = 1);
@@ -92,9 +93,8 @@ class UIWindow
         SCALE = 0b0100,
         ALL = 0b0111
     };
-    void add_watcher(const std::string &name, Transform3D *value,
-                     Transform3DWatchFlags flags = Transform3DWatchFlags::ALL, WatcherMode mode = WatcherMode::INPUT,
-                     f32 min = 0, f32 max = 100, f32 step = 0.1f);
+    void add_watcher(const std::string &name, Transform3D *value, int flags = Transform3DWatchFlags::ALL,
+                     WatcherMode mode = WatcherMode::INPUT, f32 min = 0, f32 max = 100, f32 step = 0.1f);
 };
 
 typedef std::shared_ptr<UIWindow> UIWindowPtr;

@@ -3,6 +3,7 @@
 #include "gameObject.hpp"
 #include "mesh.hpp"
 
+/*
 class SunScript : public Script
 {
   private:
@@ -92,3 +93,5 @@ class MoonScript : public Script
         mesh->setUniform(UNIFORM_LOCATIONS::VIEW_POS, vec3(gameObject->getObjectMatrix()[3]));
     }
 };
+
+*/

@@ -1,10 +1,10 @@
 #ifndef GLUTILS_HPP
 #define GLUTILS_HPP
 
-#include <iostream>
-#include <deque>
-#include <string.h>
 #include <algorithm>
+#include <deque>
+#include <iostream>
+#include <string.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -14,12 +14,12 @@
 #include "typedef.hpp"
 #include "utils.hpp"
 
-#include "inputManager.hpp"
 #include "globals.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-using namespace EngineGlobals;
+#include "inputManager.hpp"
+// using namespace EngineGlobals;
 
 // #include <Utils.hpp>
 inline const std::string TERMINAL_ERROR = "\e[1;31m"; //"\033[91m";
@@ -49,27 +49,17 @@ struct errorHistoric
 
 std::ostream &operator<<(std::ostream &os, GLenum_t e);
 
-void printGLerror(
-    GLenum _source,
-    GLenum _type,
-    GLuint id,
-    GLenum _severity,
-    GLsizei length,
-    const GLchar *message);
+void printGLerror(GLenum _source, GLenum _type, GLuint id, GLenum _severity, GLsizei length, const GLchar *message);
 
-void GLAPIENTRY MessageCallback(GLenum _source,
-                                GLenum _type,
-                                GLuint id,
-                                GLenum _severity,
-                                GLsizei length,
-                                const GLchar *message,
-                                const void *userParam);
+void GLAPIENTRY MessageCallback(GLenum _source, GLenum _type, GLuint id, GLenum _severity, GLsizei length,
+                                const GLchar *message, const void *userParam);
 
 inline void resizeCallback(GLFWwindow *window, i32 width, i32 height)
 {
+    using namespace EngineGlobals;
     windowSize = ivec2(width, height);
     glViewport(0, 0, width, height);
-    projectionMatrix = perspective(radians(45.0f), (f32)width / (f32)height, 0.1f, 1000.0f);
+    refreshProjectionMatrix();
 }
 
 void glfw_error_callback(i32 error, const char *description);

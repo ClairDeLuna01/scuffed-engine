@@ -17,7 +17,6 @@
 #include "shader.hpp"
 #include "typedef.hpp"
 #include "utils.hpp"
-using namespace EngineGlobals;
 
 #include "glm/glm.hpp"
 
@@ -27,9 +26,9 @@ typedef std::shared_ptr<class Scene> ScenePtr;
 
 class Scene
 {
-    private:
-    std::deque<ShaderProgramPtr> shaders;
-    std::deque<MaterialPtr> materials;
+  private:
+    std::unordered_map<std::string, ShaderProgramPtr> shaders;
+    std::unordered_map<std::string, MaterialPtr> materials;
     std::unordered_map<std::string, SkyboxPtr> skyboxes;
 
     constexpr static size_t MAX_LIGHTS = 10;
@@ -41,11 +40,17 @@ class Scene
     u32 uboLights;
     u32 lightsIndex = 0;
 
-    void addShader(ShaderProgramPtr shader);
+    FBOPtr fbo = nullptr;
+    FBOPtr fbo2 = nullptr;
 
-    void addMaterial(MaterialPtr material);
+    CameraPtr sceneCamera = std::make_shared<Camera>();
+    SkyboxPtr sceneSkybox = nullptr;
 
-    public:
+    void addShader(std::string shaderName, ShaderProgramPtr shader);
+
+    void addMaterial(std::string materialName, MaterialPtr material);
+
+  public:
     Scene();
     ~Scene();
 
@@ -62,4 +67,19 @@ class Scene
     GameObjectPtr getRoot();
 
     GameObjectPtr find(std::string name);
+
+    MaterialPtr getMaterial(std::string name)
+    {
+        MaterialPtr material = materials[name];
+        if (!material)
+        {
+            std::cerr << "Material " << name << " not found" << std::endl;
+        }
+        return material;
+    }
+
+    FBOPtr getFBO()
+    {
+        return fbo;
+    }
 };

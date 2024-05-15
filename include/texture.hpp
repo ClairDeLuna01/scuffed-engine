@@ -1,4 +1,5 @@
 #pragma once
+#include "globals.hpp"
 #include "stb_image.h"
 #include "typedef.hpp"
 
@@ -278,3 +279,102 @@ class CubeMap
 using CubeMapPtr = std::shared_ptr<CubeMap>;
 CubeMapPtr loadCubeMap(std::array<std::string, 6> faces_filenames);
 CubeMapPtr loadCubeMap(std::string filename);
+
+class FBO
+{
+  private:
+    GLuint fboID;
+    GLuint rboID;
+    GLuint textureID;
+    i32 width, height;
+
+  public:
+    FBO(i32 _width, i32 _height) : width(_width), height(_height)
+    {
+        glGenFramebuffers(1, &fboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glGenRenderbuffers(1, &rboID);
+        glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboID);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cerr << "Framebuffer is not complete!" << std::endl;
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    ~FBO()
+    {
+        glDeleteFramebuffers(1, &fboID);
+        glDeleteRenderbuffers(1, &rboID);
+        glDeleteTextures(1, &textureID);
+    }
+
+    inline GLuint getTextureID()
+    {
+        return textureID;
+    }
+
+    inline void bind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+        glViewport(0, 0, width, height);
+    }
+
+    inline void unbind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    inline void blit(GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboID);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(0, 0, width, height, 0, 0, EngineGlobals::windowSize.x, EngineGlobals::windowSize.y, mask,
+                          GL_NEAREST);
+    }
+
+    inline void blit(FBOPtr fbo, GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboID);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo->fboID);
+        glBlitFramebuffer(0, 0, width, height, 0, 0, fbo->width, fbo->height, mask, GL_NEAREST);
+    }
+
+    inline void bindTexture()
+    {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+    }
+
+    void drawToPPM(std::string filename)
+    {
+        u8 *data = new u8[width * height * 3];
+        bindTexture();
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        unbind();
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        FILE *f = fopen(filename.c_str(), "wb");
+        fprintf(f, "P6\n%d %d\n255\n", width, height);
+        fwrite(data, 1, width * height * 3, f);
+        fclose(f);
+
+        delete[] data;
+    }
+};
+
+using FBOPtr = std::shared_ptr<FBO>;

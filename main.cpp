@@ -17,6 +17,7 @@
 #include "imgui/imgui.h"
 
 using namespace EngineGlobals;
+namespace rp3d = reactphysics3d;
 
 i32 main()
 {
@@ -30,21 +31,27 @@ i32 main()
 
     scene = Scene::Load("scenes/scene.xml");
 
-    getPhysicsWorld()->setGravity(reactphysics3d::Vector3(0.0f, -9.81f, 0.0f));
+    getPhysicsWorld()->setGravity(rp3d::Vector3(0.0f, -20.0f, 0.0f));
+
+    f32 fps = 0.0f;
 
     scene->Start();
+    auto w = getUI().add_window("FPS", {});
+    w->add_watcher("FPS", &fps, UIWindow::WatcherMode::READONLY);
     while (!glfwWindowShouldClose(window))
     {
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         camera->needsUpdate = true;
 
         // compute deltatime
         f32 currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        fps = 1.0f / deltaTime;
 
-        std::cout << "FPS: " << 1.0f / deltaTime << "     \r" << std::flush;
+        // std::cout << "FPS: " << 1.0f / deltaTime << "     \r" << std::flush;
 
         i++;
 

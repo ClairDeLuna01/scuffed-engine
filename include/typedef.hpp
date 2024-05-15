@@ -49,3 +49,20 @@ GameObjectPtr createGameObject(std::string name);
 GameObjectPtr createGameObject();
 
 typedef vec<3, u32, highp> uivec3;
+
+struct Light
+{
+    vec3 position;
+    vec3 color;
+    f32 intensity;
+};
+
+struct DirectionalLight
+{
+    vec3 direction;
+    vec3 color;
+    f32 intensity;
+};
+
+typedef std::shared_ptr<class FBO> FBOPtr;
+FBOPtr getFBO();

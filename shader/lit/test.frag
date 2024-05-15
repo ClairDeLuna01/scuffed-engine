@@ -2,6 +2,7 @@
 
 out vec4 FragColor;
 
+in vec2 uv;
 in vec3 fragPos;
 in vec3 normalDir;
 
@@ -35,7 +36,10 @@ layout(location = 3) uniform mat4 projection;
 layout(location = 4) uniform vec3 viewPos;
 
 void main() {
-    vec3 baseColor = vec3(0.5);
+    vec3 yellow = vec3(1.0, 1.0, 0.0);
+    vec3 black = vec3(0.0);
+    vec3 baseColor = vec3(mix(mix(yellow, black, step(0.25, mod(uv.x, 0.5))), mix(black, yellow, step(0.25, mod(uv.x, 0.5))), step(0.5, uv.y)));
+
     vec3 ambient = 0.2 * baseColor;
     vec3 color = vec3(0.0);
     vec3 specular = vec3(0.0);

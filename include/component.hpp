@@ -9,8 +9,6 @@
 
 using namespace glm;
 
-typedef std::shared_ptr<class Component> ComponentPtr;
-
 typedef std::shared_ptr<class GameObject> GameObjectPtr;
 
 // NOT an ECS component
@@ -35,12 +33,49 @@ class Component
     virtual void LateUpdate() {};
     virtual void FixedUpdate() {};
     virtual void Start() {};
+    virtual void LateStart() {};
+    virtual u32 getID() const = 0;
 
     GameObjectPtr getGameObject()
     {
         return gameObject;
     }
 };
+
+template <typename Derived> class ComponentBase : public Component
+{
+  private:
+    static u32 id;
+
+  protected:
+    static u32 getNextID()
+    {
+        static u32 nextID = 1;
+        return nextID++;
+    }
+
+  public:
+    ComponentBase()
+    {
+        if (id == 0)
+        {
+            id = getNextID();
+        }
+    }
+    u32 getID() const override
+    {
+        return id;
+    }
+
+    static u32 getStaticID()
+    {
+        return id;
+    }
+};
+
+template <typename Derived> u32 ComponentBase<Derived>::id = 0;
+
+typedef std::shared_ptr<Component> ComponentPtr;
 
 class ComponentFactory
 {
@@ -94,7 +129,7 @@ template <typename T> bool setProperty(const std::string &value, T &property);
         return true;                                                                                                   \
     }
 
-class Script : public Component
+class Script : public ComponentBase<Script>
 {
   protected:
     Script()

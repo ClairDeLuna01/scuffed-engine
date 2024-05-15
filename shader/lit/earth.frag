@@ -15,11 +15,20 @@ struct Light {
                      // total: 32 bytes
 };
 
+struct DirectionalLight {
+                        // base alignment  | aligned offset
+    vec3 direction;  // 12 bytes        | 0
+    vec3 color;      // 12 bytes        | 16
+    float intensity; //  4 bytes        | 32
+                        // total: 32 bytes
+};
+
 layout(std140, binding = 0) uniform Lights {
-                           // base alignment  | aligned offset
-    Light lights[10];      // 320 bytes       | 0
-    int numLights;         //   4 bytes       | 320
-                           // total: 336 bytes
+                               // base alignment  | aligned offset
+    Light lights[10];          // 320 bytes       | 0
+    DirectionalLight dirLight; // 32 bytes        | 320
+    int numLights;             //   4 bytes       | 352
+                               // total: 356 bytes
 };
 
 layout(location = 500) uniform sampler2D TextureDay;

@@ -26,7 +26,8 @@ Shader::Shader(std::string filename)
     }
     else
     {
-        std::cerr << "Shader " << stripPath(filename) << " doesn't have an explicit extension, please provide the shader type in the constructor.\n";
+        std::cerr << "Shader " << stripPath(filename)
+                  << " doesn't have an explicit extension, please provide the shader type in the constructor.\n";
     }
 }
 
@@ -46,7 +47,8 @@ void Shader::load(std::string filename)
     }
     else
     {
-        std::cerr << "Shader " << stripPath(filename) << " doesn't have an explicit extension, please provide the shader type in the constructor.\n";
+        std::cerr << "Shader " << stripPath(filename)
+                  << " doesn't have an explicit extension, please provide the shader type in the constructor.\n";
     }
 }
 
@@ -321,6 +323,21 @@ void ShaderProgram::setUniform(i32 location, const vec3 &value)
     {
         use();
         glUniform3fv(location, 1, &value[0]);
+    }
+    else
+    {
+
+        std::cerr << "Can't set uniform for non initalized/linked shader program.\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ShaderProgram::setUniform(i32 location, const vec2 &value)
+{
+    if (this->ID != PROGRAM_NULL && this->_isLinked == GL_TRUE)
+    {
+        use();
+        glUniform2fv(location, 1, &value[0]);
     }
     else
     {

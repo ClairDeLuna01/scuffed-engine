@@ -24,11 +24,14 @@ void flyInputStep(GLFWwindow *, f32);
 namespace OrbitalCamera
 {
 extern f32 radius, angleX, angleY;
+extern vec3 offset;
 extern bool mousePressed;
+extern bool needMousePressed;
 void orbitalInputCursor(GLFWwindow *, f64, f64);
 void orbitalInputMouse(GLFWwindow *, u32, u32, u32);
 void orbitalInputScroll(GLFWwindow *, f64, f64);
 void orbitalInputStep(GLFWwindow *, f32);
+void orbitalInputKey(GLFWwindow *, u32, u32, u32, u32);
 } // namespace OrbitalCamera
 } // namespace CameraInput
 

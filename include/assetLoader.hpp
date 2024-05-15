@@ -1,21 +1,22 @@
 #pragma once
 #include <fstream>
+#include <iostream>
 #include <sstream>
-#include <vector>
 #include <string>
 #include <unordered_map>
-#include <iostream>
+#include <vector>
 
 #include <glm/glm.hpp>
 using namespace glm;
 
 #include <assimp/Importer.hpp>
-#include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/scene.h>
 
 #include "typedef.hpp"
 
-void loadMesh(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals, std::vector<vec2> &uvs)
+void loadMesh(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices, std::vector<vec3> &normals,
+              std::vector<vec2> &uvs)
 {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);

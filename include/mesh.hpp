@@ -14,7 +14,7 @@
 #include "component.hpp"
 #include "gameObject.hpp"
 
-using namespace EngineGlobals;
+// using namespace EngineGlobals;
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -25,14 +25,134 @@ using namespace EngineGlobals;
 #define M_PI 3.14159265358979323846
 #endif
 
+#include <reactphysics3d/reactphysics3d.h>
+
 using namespace glm;
 
-struct Light
+class ShadowMappedDirectionalLight
 {
-    vec3 position;
+  private:
+    Transform3D transform;
+    u32 shadowMapFBOID;
+    u32 shadowMapTextureID;
+    u32 shadowMapWidth;
+    u32 shadowMapHeight;
+    mat4 lightSpaceMatrix;
     vec3 color;
     f32 intensity;
+
+    void genShadowMapFBO()
+    {
+        glGenFramebuffers(1, &shadowMapFBOID);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBOID);
+
+        glGenTextures(1, &shadowMapTextureID);
+        glBindTexture(GL_TEXTURE_2D, shadowMapTextureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT,
+                     GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMapTextureID, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    void calculateLightSpaceMatrix()
+    {
+        f32 near_plane = 0.01f, far_plane = 100.0f;
+        f32 orthoSize = 50.0f;
+        lightSpaceMatrix =
+            ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane) * transform.getModel();
+    }
+
+  public:
+    ShadowMappedDirectionalLight(Transform3D _transform, u32 _shadowMapWidth, u32 _shadowMapHeight,
+                                 vec3 _color = vec3(1.0f), f32 _intensity = 1.0f)
+        : transform(_transform), shadowMapWidth(_shadowMapWidth), shadowMapHeight(_shadowMapHeight), color(_color),
+          intensity(_intensity)
+    {
+        genShadowMapFBO();
+        calculateLightSpaceMatrix();
+    }
+
+    void bind()
+    {
+        glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBOID);
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+
+    void unbind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    u32 getShadowMapTextureID()
+    {
+        return shadowMapTextureID;
+    }
+
+    mat4 getLightSpaceMatrix()
+    {
+        return lightSpaceMatrix;
+    }
+
+    vec3 getColor()
+    {
+        return color;
+    }
+
+    f32 getIntensity()
+    {
+        return intensity;
+    }
+
+    Transform3D getTransform()
+    {
+        return transform;
+    }
+
+    void saveShadowMapToPPM(std::string filename)
+    {
+        u32 size = shadowMapWidth * shadowMapHeight;
+        f32 *dataFloat = new f32[size];
+        u8 *data = new u8[size];
+        glBindTexture(GL_TEXTURE_2D, shadowMapTextureID);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, dataFloat);
+        f32 min = 1.0f;
+        f32 max = 0.0f;
+
+        for (u32 i = 0; i < size; i++)
+        {
+            if (dataFloat[i] < min)
+                min = dataFloat[i];
+            if (dataFloat[i] > max)
+                max = dataFloat[i];
+        }
+
+        for (u32 i = 0; i < size; i++)
+        {
+            data[i] = (u8)(255.0f * (dataFloat[i] - min) / (max - min));
+        }
+
+        std::ofstream file(filename, std::ios::binary);
+
+        std::string header =
+            "P5\n" + std::to_string(shadowMapWidth) + " " + std::to_string(shadowMapHeight) + "\n255\n";
+        file.write(header.c_str(), header.size());
+        file.write((char *)data, size);
+
+        delete[] dataFloat;
+    }
 };
+
+std::shared_ptr<DirectionalLight> getSun();
 
 class ElementBufferObject
 {
@@ -168,7 +288,7 @@ struct Ray
 
 typedef std::shared_ptr<class Mesh> MeshPtr;
 
-class Mesh : public Component, public std::enable_shared_from_this<Mesh>
+class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mesh>
 {
   protected:
     MaterialPtr material;
@@ -182,6 +302,19 @@ class Mesh : public Component, public std::enable_shared_from_this<Mesh>
     std::vector<vec3> vertices;
     std::vector<vec3> normals;
     std::vector<vec2> uvs;
+
+    bool wireframe = false;
+
+    // horrible cursed hack to have transparent objects render after opaque objects but before some other objects
+    // since we call update multiple times on meshes, we need to keep track of the "render state" of the mesh
+    enum class RENDER_STATE
+    {
+        OPAQUE,
+        TRANSPARENT,
+        POST_TRANSPARENT,
+
+        RENDER_STATE_COUNT
+    } renderState = RENDER_STATE::OPAQUE;
 
   public:
     Mesh(MaterialPtr _mat) : material(_mat)
@@ -205,6 +338,41 @@ class Mesh : public Component, public std::enable_shared_from_this<Mesh>
         addVBO(vbo1);
         addVBO(vbo2);
         addVBO(vbo3);
+    }
+
+    Mesh(MaterialPtr _mat, std::vector<uivec3> _indices, std::vector<vec3> _vertices, std::vector<vec3> _normals,
+         std::vector<vec2> _uvs)
+        : material(_mat), indices(_indices), vertices(_vertices), normals(_normals), uvs(_uvs)
+    {
+        glGenVertexArrays(1, &vaoID);
+
+        EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
+
+        VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
+        VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
+        VertexBufferObject vbo3(2, sizeof(f32), 2, GL_FLOAT, (void *)uvs.data(), uvs.size());
+
+        setEBO(ebo);
+
+        addVBO(vbo1);
+        addVBO(vbo2);
+        addVBO(vbo3);
+    }
+
+    Mesh(MaterialPtr _mat, std::vector<uivec3> _indices, std::vector<vec3> _vertices, std::vector<vec3> _normals)
+        : material(_mat), indices(_indices), vertices(_vertices), normals(_normals)
+    {
+        glGenVertexArrays(1, &vaoID);
+
+        EBOptr ebo = std::make_unique<ElementBufferObject>((void *)indices.data(), indices.size() * 3);
+
+        VertexBufferObject vbo1(3, sizeof(f32), 0, GL_FLOAT, (void *)vertices.data(), vertices.size());
+        VertexBufferObject vbo2(3, sizeof(f32), 1, GL_FLOAT, (void *)normals.data(), normals.size());
+
+        setEBO(ebo);
+
+        addVBO(vbo1);
+        addVBO(vbo2);
     }
 
     ~Mesh();
@@ -243,24 +411,60 @@ class Mesh : public Component, public std::enable_shared_from_this<Mesh>
 
     void bind(mat4 objMat)
     {
+        using namespace EngineGlobals;
         material->use();
         material->getShader()->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, objMat);
         material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, getViewMatrix());
         material->getShader()->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::SCREEN_RESOLUTION, vec2(EngineGlobals::windowSize));
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_POS, camera->getTransform().getPosition());
 
         Mesh::bind();
     }
 
-    void draw(mat4 objMat)
+    void bindTransparent(mat4 objMat)
     {
         bind(objMat);
+
+        glActiveTexture(GL_TEXTURE0 + material->getTextureCount());
+        getFBO()->bindTexture();
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::FRAMEBUFFER, (i32)material->getTextureCount());
+    }
+
+    void draw(mat4 objMat)
+    {
+        if (wireframe)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        bind(objMat);
+        ebo->draw();
+        unbind();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    void drawTransparent(mat4 objMat)
+    {
+        bindTransparent(objMat);
         ebo->draw();
         unbind();
     }
 
     void Update() override
     {
-        draw(getGameObject()->getObjectMatrix());
+        bool transparentMaterial = material->transparentShader();
+        bool postTransparentMaterial = material->postTransparentShader();
+        if (!(transparentMaterial || postTransparentMaterial) && renderState == RENDER_STATE::OPAQUE)
+            draw(getGameObject()->getObjectMatrix());
+
+        else if (transparentMaterial && renderState == RENDER_STATE::TRANSPARENT)
+            drawTransparent(getGameObject()->getObjectMatrix());
+
+        else if (postTransparentMaterial && renderState == RENDER_STATE::POST_TRANSPARENT)
+        {
+            draw(getGameObject()->getObjectMatrix());
+        }
+
+        renderState = (RENDER_STATE)((((i32)renderState) + 1) % (i32)RENDER_STATE::RENDER_STATE_COUNT);
     }
 
     void Update(mat4 objMat)
@@ -268,18 +472,22 @@ class Mesh : public Component, public std::enable_shared_from_this<Mesh>
         draw(objMat);
     }
 
-    bool meshIntersect(Ray r, vec3 &intersectionPoint, vec3 &normal) const;
+    bool meshIntersect(::Ray r, vec3 &intersectionPoint, vec3 &normal) const;
 
     // temporary until we set up assimp to load whole scenes at once
     static void FromFile(const char *path, std::vector<uivec3> &indices, std::vector<vec3> &vertices,
                          std::vector<vec3> &normals, std::vector<vec2> &uvs);
 
     friend class GameObject;
+    friend class Helper;
+    friend class rp3dTriangleMeshHelper;
+
+    friend rp3d::TriangleMesh *toRP3DMesh(const MeshPtr &mesh);
 };
 
 MeshPtr loadMesh(MaterialPtr mat, std::string filename);
 
-class LODMesh : public Component
+class LODMesh : public ComponentBase<LODMesh>
 {
   private:
     std::vector<MeshPtr> meshes;
@@ -293,6 +501,7 @@ class LODMesh : public Component
 
     void Update() override
     {
+        using namespace EngineGlobals;
         vec3 cameraPosition = camera->getTransform().getPosition();
         f32 d = distance(getGameObject()->getTransform().getPosition(), cameraPosition);
         for (size_t i = 0; i < distances.size(); i++)
@@ -346,6 +555,7 @@ class Skybox : public Mesh
 
     void bind() override
     {
+        using namespace EngineGlobals;
         material->use();
         mat4 view = getViewMatrix();
         view[3] = vec4(0, 0, 0, 1);

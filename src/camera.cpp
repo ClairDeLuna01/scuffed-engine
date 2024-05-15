@@ -1,10 +1,12 @@
 #include "camera.hpp"
 #include "UI.hpp"
+#include "scene.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 using namespace glm;
+using namespace EngineGlobals;
 
 Camera::Camera() : GameObject("Camera")
 {
@@ -166,6 +168,7 @@ void CameraInput::FlyCamera::flyInputCursor(GLFWwindow *window, f64 xpos, f64 yp
 
 void CameraInput::FlyCamera::flyInputStep(GLFWwindow *window, f32 deltaTime)
 {
+    using namespace EngineGlobals;
     // std::cout << camera->transform.getPosition() << std::endl;
     if (forward)
     {
@@ -203,7 +206,7 @@ void CameraInput::FlyCamera::flyInputStep(GLFWwindow *window, f32 deltaTime)
 
 void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos, f64 ypos)
 {
-    if (!mousePressed)
+    if (!mousePressed && needMousePressed)
     {
         return;
     }
@@ -214,8 +217,8 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
         lastY = ypos;
     }
 
-    f32 xoffset = lastX - xpos;
-    f32 yoffset = lastY - ypos;
+    f32 xoffset = xpos - lastX;
+    f32 yoffset = ypos - lastY;
 
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -234,12 +237,17 @@ void CameraInput::OrbitalCamera::orbitalInputCursor(GLFWwindow *window, f64 xpos
 
 void CameraInput::OrbitalCamera::orbitalInputStep(GLFWwindow *window, f32 deltaTime)
 {
+    if (!needMousePressed)
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     camera->getTransform().setPosition(
-        vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)));
-    camera->lookAt(vec3(0));
+        vec3(radius * cos(angleX) * cos(angleY), radius * sin(angleY), radius * sin(angleX) * cos(angleY)) + offset);
+    camera->lookAt(offset);
 
     camera->needsUpdate = true;
     camera->updateObjectMatrix();
+
+    // scene->getMaterial("BasicMat")->getShader()->setUniform(UNIFORM_LOCATIONS::FOCUS_DISTANCE, radius);
 }
 
 void CameraInput::OrbitalCamera::orbitalInputMouse(GLFWwindow *window, u32 button, u32 action, u32 mods)
@@ -263,6 +271,11 @@ void CameraInput::OrbitalCamera::orbitalInputMouse(GLFWwindow *window, u32 butto
 
 void CameraInput::OrbitalCamera::orbitalInputScroll(GLFWwindow *window, f64 xoffset, f64 yoffset)
 {
+    if (!mousePressed && needMousePressed)
+    {
+        return;
+    }
+
     radius -= yoffset;
     if (radius < 1.0f)
     {
@@ -273,6 +286,22 @@ void CameraInput::OrbitalCamera::orbitalInputScroll(GLFWwindow *window, f64 xoff
     camera->lookAt(vec3(0));
     camera->needsUpdate = true;
     camera->updateObjectMatrix();
+}
+
+void CameraInput::OrbitalCamera::orbitalInputKey(GLFWwindow *window, u32 key, u32 scancode, u32 action, u32 mods)
+{
+    switch (key)
+    {
+    case GLFW_KEY_F2:
+        if (action == GLFW_PRESS)
+        {
+            needMousePressed = !needMousePressed;
+            glfwSetInputMode(window, GLFW_CURSOR, needMousePressed ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 namespace EngineGlobals
@@ -286,7 +315,7 @@ mat4 getViewMatrix()
 namespace CameraInput
 {
 f64 lastX = -1, lastY = -1;
-f32 sensitivity = 0.01f;
+f32 sensitivity = 0.005f;
 namespace FlyCamera
 {
 bool forward, backward, left, right, up, down = false;
@@ -295,7 +324,9 @@ f32 speed = 0.1f;
 
 namespace OrbitalCamera
 {
-f32 radius = 15.0f, angleX = 0.0f, angleY = 0.0f;
+f32 maxRadius = 15.0f, radius = 15.0f, angleX = 0.0f, angleY = 0.0f;
+vec3 offset = vec3(0.0f, 0.0f, 0.0f);
 bool mousePressed = false;
+bool needMousePressed = false;
 } // namespace OrbitalCamera
 } // namespace CameraInput

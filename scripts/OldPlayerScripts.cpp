@@ -7,6 +7,7 @@
 
 using namespace glm;
 
+/*
 class PlayerController : public Script
 {
     bool forward, backward, left, right, shift = false;
@@ -188,3 +189,4 @@ class PlayerController : public Script
         planeObject = scene->find("Terrain");
     }
 };
+*/

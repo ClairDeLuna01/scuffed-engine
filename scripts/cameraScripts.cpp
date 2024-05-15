@@ -17,6 +17,7 @@ class OrbitalCam : public Script
         InputManager::addCursorCallback(CameraInput::OrbitalCamera::orbitalInputCursor);
         InputManager::addScrollCallback(CameraInput::OrbitalCamera::orbitalInputScroll);
         InputManager::addStepCallback(CameraInput::OrbitalCamera::orbitalInputStep);
+        InputManager::addKeyCallback(CameraInput::OrbitalCamera::orbitalInputKey);
 
         if (enableGUI)
         {

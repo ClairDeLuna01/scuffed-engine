@@ -1,7 +1,7 @@
 CC = g++
-CPPFLAGS = -Wall -O0 -Wno-strict-aliasing -g --std=c++23
+CPPFLAGS = -Wall -Ofast -Wno-strict-aliasing -g --std=c++23 -Wno-format
 ifeq ($(OS),Windows_NT)
-	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp
+	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp -lreactphysics3d
 	LINKFLAGS =  
 else
 	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp -lreactphysics3d
@@ -110,8 +110,6 @@ default:
 	@$(call ECHO,$(call PRINT_SUCCESS,Starting build...))
 	@$(call ECHO,$(call PRINT_INFO,Building) 	$(call PRINT_PATH,$(EXEC)))
 	@$(call ECHO,$(call PRINT_INFO,Sources) 	$(call PRINT_PATH,$(SOURCES)))
-	@$(call ECHO,$(call PRINT_INFO,Objects) 	$(call PRINT_PATH,$(OBJ)))
-	@$(call ECHO,$(call PRINT_INFO,Dependencies) 	$(call PRINT_PATH,$(DEPFILES)))
 	@$(MAKE) $(EXEC) -j8 -s
 	@$(call ECHO,$(call PRINT_SUCCESS,Build successful!))
 

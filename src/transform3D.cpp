@@ -102,6 +102,15 @@ Transform3D Transform3D::reset()
     return *this;
 }
 
+Transform3D &Transform3D::lerp(const Transform3D &target, f32 alpha)
+{
+    position = glm::lerp(position, target.position, alpha);
+    rotation = glm::slerp(rotation, target.rotation, alpha);
+    scale = glm::lerp(scale, target.scale, alpha);
+    modelNeedsUpdate = true;
+    return *this;
+}
+
 vec3 Transform3D::getForward()
 {
     return rotation * vec3(0.0f, 0.0f, -1.0f);

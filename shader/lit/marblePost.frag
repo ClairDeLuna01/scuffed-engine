@@ -2,6 +2,7 @@
 
 out vec4 FragColor;
 
+in vec2 uv;
 in vec3 fragPos;
 in vec3 normalDir;
 
@@ -33,12 +34,23 @@ layout(location = 1) uniform mat4 model;
 layout(location = 2) uniform mat4 view;
 layout(location = 3) uniform mat4 projection;
 layout(location = 4) uniform vec3 viewPos;
+layout(location = 6) uniform vec2 resolution;
 
 void main() {
-    vec3 baseColor = vec3(0.5);
+    vec3 white = vec3(1.0);
+    vec3 black = vec3(0.0);
+    // vec3 baseColor = vec3(
+    //     mix(mix(yellow, black, step(0.25, mod(uv.x, 0.5))), 
+    //     mix(black, yellow, step(0.25, mod(uv.x, 0.5))), 
+    //     step(0.5, uv.y)));
+
+    vec3 viewDir = normalize(viewPos - fragPos);
+
+    vec3 baseColor = vec3(0.08, 0.25, 0.02);
+
     vec3 ambient = 0.2 * baseColor;
     vec3 color = vec3(0.0);
-    vec3 specular = vec3(0.0);
+    float specular = 0.0;
     for(int i = 0; i < numLights; i++) {
         Light light = lights[i];
         // compute diffuse
@@ -47,13 +59,12 @@ void main() {
         float diff = max(dot(lightDir, norm), 0.0);
         vec3 diffuse = vec3(diff * light.intensity);
 
-        // // compute specular
-        // vec3 viewDir = normalize(viewPos - fragPos);
-        // vec3 reflectDir = reflect(lightDir, norm);
-        // float spec = pow(max(dot(reflectDir, viewDir), 0.0), 32);
-        // specular = vec3(spec * light.intensity);
+        // compute specular
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 128);
+        // specular += spec * light.intensity;
 
-        color += (diffuse + specular) * light.color;
+        color += (diffuse) * light.color;
     }
 
     // compute directional light
@@ -61,11 +72,25 @@ void main() {
     vec3 diffuse = vec3(diff * dirLight.intensity) * dirLight.color;
     color += diffuse;
 
+    // directional light specular
+    vec3 reflectDir = reflect(dirLight.direction, normalize(normalDir));
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 128);
+    // specular += spec * dirLight.intensity * 2.0;
+
     vec3 result = clamp(color * baseColor + ambient, 0.0, 1.0);
 
     // result = vec3(numLights);
 
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, 0.3);
+    if(specular > 0.0) {
+        FragColor += vec4(vec3(specular), max(specular - 0.3, 0.0));
+    }
+
+    // vec3 debritColor = vec3(0.5, 0.5, 0.5);
+    // float hasDebrit = smoothstep(0.75, 0.85, noise);
+    // FragColor = mix(FragColor, vec4(debritColor, 1.0), hasDebrit);
+
+    // FragColor = vec4(vec3((dot(viewDir, reflectDir) + 1.0) / 2.0), 1.0);
 
     // FragColor = vec4(normalDir, 1.0);
     // FragColor = vec4(specular, 1.0);

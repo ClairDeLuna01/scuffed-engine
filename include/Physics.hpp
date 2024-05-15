@@ -6,6 +6,7 @@
 #include "component.hpp"
 #include "gameObject.hpp"
 #include "globals.hpp"
+#include "mesh.hpp"
 #include "typedef.hpp"
 
 #define USE_REACTPHYSICS
@@ -244,15 +245,18 @@ class BoxCollider : public Collider
 };
 #else
 #include <reactphysics3d/reactphysics3d.h>
+namespace rp3d = reactphysics3d;
 
-reactphysics3d::PhysicsCommon &getPhysicsCommon();
-reactphysics3d::PhysicsWorld *getPhysicsWorld();
+rp3d::PhysicsCommon &getPhysicsCommon();
+rp3d::PhysicsWorld *getPhysicsWorld();
 
 class PhysicsEngine
 {
   public:
     void Update();
 };
+
+rp3d::TriangleMesh *toRP3DMesh(const MeshPtr &mesh);
 
 using PhysicsEnginePtr = std::shared_ptr<class PhysicsEngine>;
 

@@ -7,6 +7,18 @@
 
 #include <cstring>
 
+std::shared_ptr<DirectionalLight> getSun()
+{
+    // Transform3D sunTransform;
+    // sunTransform.setPosition(vec3(0.0f, 50.0f, 0.0f));
+    // sunTransform.setRotation(vec3(0.0f, 0.0f, 0.0f));
+    vec3 sunDir = vec3(0.0f, -1.0f, 0.0f);
+    vec3 sunColor = vec3(1.0f, 1.0f, 1.0f);
+    f32 sunIntensity = 0.75f;
+    static auto sun = std::make_shared<DirectionalLight>(DirectionalLight{sunDir, sunColor, sunIntensity});
+    return sun;
+}
+
 Mesh::~Mesh()
 {
     for (auto &vbo : vbos)

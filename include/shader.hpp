@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
-#include <vector>
+#include <iostream>
 #include <memory>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -31,7 +31,7 @@ class Shader
 
     friend class ShaderProgram;
 
-private:
+  private:
     u32 ID = SHADER_NULL;
     u32 type;
     std::string path;
@@ -41,7 +41,7 @@ private:
 
     void _delete();
 
-public:
+  public:
     Shader(){};
     Shader(std::string filename);
     Shader(std::string filename, u32 _type);
@@ -51,25 +51,39 @@ public:
     void load(std::string filename, u32 _type);
     void compile();
 
-    u32 getID() { return ID; };
-    u32 getRawType() { return type; };
+    u32 getID()
+    {
+        return ID;
+    };
+    u32 getRawType()
+    {
+        return type;
+    };
     std::string getType();
-    std::string getShaderName() { return shaderName; };
-    u32 isCompiled() { return _isCompiled; };
+    std::string getShaderName()
+    {
+        return shaderName;
+    };
+    u32 isCompiled()
+    {
+        return _isCompiled;
+    };
 };
 
 class ShaderProgram
 {
 
-private:
+  private:
     u32 ID = PROGRAM_NULL;
     Shader vert;
     Shader frag;
     u32 _isLinked = GL_FALSE;
+    bool transparent = false;
+    bool postTransparent = false;
 
     void _delete();
 
-public:
+  public:
     ShaderProgram(){};
     ShaderProgram(std::string vertPath, std::string fragPath);
     ~ShaderProgram();
@@ -79,14 +93,50 @@ public:
     void use();
     void stop();
 
-    u32 getID() { return ID; };
-    u32 getVertID() { return vert.getID(); };
-    u32 getFragID() { return frag.getID(); };
-    u32 isLinked() { return _isLinked; };
+    u32 getID()
+    {
+        return ID;
+    };
+    u32 getVertID()
+    {
+        return vert.getID();
+    };
+    u32 getFragID()
+    {
+        return frag.getID();
+    };
+    u32 isLinked()
+    {
+        return _isLinked;
+    };
 
-    i32 getUniformLocation(std::string name) { return glGetUniformLocation(ID, name.c_str()); }
+    i32 getUniformLocation(std::string name)
+    {
+        return glGetUniformLocation(ID, name.c_str());
+    }
+
+    bool isTransparent()
+    {
+        return transparent;
+    }
+
+    bool isPostTransparent()
+    {
+        return postTransparent;
+    }
+
+    void setTransparent(bool value)
+    {
+        transparent = value;
+    }
+
+    void setPostTransparent(bool value)
+    {
+        postTransparent = value;
+    }
 
     void setUniform(i32 location, const mat4 &value);
+    void setUniform(i32 location, const vec2 &value);
     void setUniform(i32 location, const vec3 &value);
     void setUniform(i32 location, const vec4 &value);
     void setUniform(i32 location, const f32 &value);

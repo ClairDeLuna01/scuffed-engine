@@ -78,21 +78,78 @@ PhysicsEnginePtr getPhysicsEngine()
     return physicsEngine;
 }
 #else
-reactphysics3d::PhysicsCommon &getPhysicsCommon()
+namespace rp3d = reactphysics3d;
+
+rp3d::PhysicsCommon &getPhysicsCommon()
 {
-    static reactphysics3d::PhysicsCommon physicsCommon;
+    static rp3d::PhysicsCommon physicsCommon;
     return physicsCommon;
 }
 
-reactphysics3d::PhysicsWorld *getPhysicsWorld()
+rp3d::PhysicsWorld *getPhysicsWorld()
 {
-    static reactphysics3d::PhysicsWorld *world = getPhysicsCommon().createPhysicsWorld();
+    static rp3d::PhysicsWorld *world = getPhysicsCommon().createPhysicsWorld();
     return world;
 }
 
 void PhysicsEngine::Update()
 {
     getPhysicsWorld()->update(EngineGlobals::fixedDeltaTime);
+}
+
+rp3d::TriangleMesh *toRP3DMesh(const MeshPtr &mesh)
+{
+    rp3d::TriangleVertexArray triangleArray(mesh->vertices.size(), mesh->vertices.data(), sizeof(glm::vec3),
+                                            mesh->normals.data(), sizeof(glm::vec3), mesh->indices.size(),
+                                            mesh->indices.data(), sizeof(glm::ivec3),
+                                            rp3d::TriangleVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
+                                            rp3d::TriangleVertexArray::NormalDataType::NORMAL_FLOAT_TYPE,
+                                            rp3d::TriangleVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
+
+    std::vector<rp3d::Message> messages;
+    rp3d::TriangleMesh *triangleMesh = getPhysicsCommon().createTriangleMesh(triangleArray, messages);
+
+    constexpr bool showErrors = true;
+    constexpr bool showWarnings = false;
+    constexpr bool showInfos = false;
+
+    for (auto &message : messages)
+    {
+        std::string type;
+        switch (message.type)
+        {
+        case rp3d::Message::Type::Error:
+            type = "Error";
+            break;
+        case rp3d::Message::Type::Warning:
+            type = "Warning";
+            break;
+        case rp3d::Message::Type::Information:
+            type = "Information";
+            break;
+        }
+
+        if (message.type == rp3d::Message::Type::Error && showErrors)
+        {
+            std::cerr << "Error: " << message.text << std::endl;
+        }
+        else if (message.type == rp3d::Message::Type::Warning && showWarnings)
+        {
+            std::cerr << "Warning: " << message.text << std::endl;
+        }
+        else if (message.type == rp3d::Message::Type::Information && showInfos)
+        {
+            std::cout << "Information: " << message.text << std::endl;
+        }
+    }
+
+    if (triangleMesh == nullptr)
+    {
+        std::cerr << "Error: Could not create triangle mesh" << std::endl;
+        return nullptr;
+    }
+
+    return triangleMesh;
 }
 
 PhysicsEnginePtr getPhysicsEngine()

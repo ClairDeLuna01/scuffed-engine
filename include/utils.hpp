@@ -15,6 +15,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <reactphysics3d/reactphysics3d.h>
+namespace rp3d = reactphysics3d;
 
 using namespace glm;
 
@@ -62,27 +63,27 @@ inline std::string stripPath(std::string src)
 }
 
 // reactphysics Vector3 to glm vec3
-inline vec3 toVec3(const reactphysics3d::Vector3 &v)
+inline vec3 toVec3(const rp3d::Vector3 &v)
 {
     return vec3(v.x, v.y, v.z);
 }
 
 // reactphysics Quaternion to glm quat
-inline quat toQuat(const reactphysics3d::Quaternion &q)
+inline quat toQuat(const rp3d::Quaternion &q)
 {
     return quat(q.w, q.x, q.y, q.z);
 }
 
 // glm vec3 to reactphysics Vector3
-inline reactphysics3d::Vector3 toVec3(const vec3 &v)
+inline rp3d::Vector3 toVec3(const vec3 &v)
 {
-    return reactphysics3d::Vector3(v.x, v.y, v.z);
+    return rp3d::Vector3(v.x, v.y, v.z);
 }
 
 // glm quat to reactphysics Quaternion
-inline reactphysics3d::Quaternion toQuat(const quat &q)
+inline rp3d::Quaternion toQuat(const quat &q)
 {
-    return reactphysics3d::Quaternion(q.x, q.y, q.z, q.w);
+    return rp3d::Quaternion(q.x, q.y, q.z, q.w);
 }
 
 inline std::string getExtension(std::string src)
@@ -136,6 +137,12 @@ inline std::ostream &operator<<(std::ostream &os, const vec4 &v)
     return os;
 }
 
+inline std::ostream &operator<<(std::ostream &os, const quat &q)
+{
+    os << "(" << q.x << ", " << q.y << ", " << q.z << ", " << q.w << ")";
+    return os;
+}
+
 inline std::ostream &operator<<(std::ostream &os, const mat4 &m)
 {
     os << "[";
@@ -164,10 +171,15 @@ enum UNIFORM_LOCATIONS : GLint
     VIEW_MATRIX = 2,
     PROJECTION_MATRIX = 3,
     VIEW_POS = 4,
+    LIGHT_SPACE_MATRIX = 5,
+    SCREEN_RESOLUTION = 6,
+    FOCUS_DISTANCE = 7,
+    FOCUS_POSITION = 8,
 
     TEXTURE0 = 500,
 
     ENVIRONMENT_MAP = 749,
+    FRAMEBUFFER = 750,
 };
 
 inline vec3 rgb(u8 r, u8 g, u8 b)
@@ -219,4 +231,27 @@ inline vec3 parseColor(char *str)
     {
         return parseVec3(str);
     }
+}
+
+inline vec3 normalize0(vec3 v)
+{
+    if (length2(v) == 0.0f)
+    {
+        return vec3(0.0f);
+    }
+    return normalize(v);
+}
+
+inline vec3 clampLength(vec3 v, f32 min, f32 max)
+{
+    f32 len = length(v);
+    if (len < min)
+    {
+        return normalize(v) * min;
+    }
+    else if (len > max)
+    {
+        return normalize(v) * max;
+    }
+    return v;
 }

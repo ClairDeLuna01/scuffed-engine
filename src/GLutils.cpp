@@ -161,6 +161,7 @@ void GLAPIENTRY MessageCallback(GLenum _source, GLenum _type, GLuint id, GLenum 
 
 void OpenGLInit()
 {
+    using namespace EngineGlobals;
     // Initialise GLFW
     if (!glfwInit())
     {
@@ -175,7 +176,16 @@ void OpenGLInit()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(1024, 768, "Scuffed Engine", NULL, NULL);
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+
+    window = glfwCreateWindow(mode->width, mode->height, "Scuffed Engine", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window.\n");
@@ -206,6 +216,8 @@ void OpenGLInit()
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -218,7 +230,9 @@ void OpenGLInit()
     glfwSetCursorPosCallback(window, InputManager::cursorCallback);
     glfwSetScrollCallback(window, InputManager::scrollCallback);
     glfwSetMouseButtonCallback(window, InputManager::mouseButtonCallback);
-    glfwSetWindowSizeCallback(window, resizeCallback);
+    glfwSetWindowSizeCallback(window, InputManager::windowSizeCallback);
+
+    InputManager::addWindowSizeCallback(resizeCallback);
 
     // get screen size
     i32 width, height;

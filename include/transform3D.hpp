@@ -6,6 +6,8 @@ using namespace glm;
 
 #include <reactphysics3d/reactphysics3d.h>
 
+namespace rp3d = reactphysics3d;
+
 #include "typedef.hpp"
 #include "utils.hpp"
 
@@ -21,18 +23,15 @@ class Transform3D
     bool modelHasChanged = false;
 
   public:
-    Transform3D()
-    {
-    }
-    Transform3D(vec3 _position, quat _rotation, vec3 _scale) : position(_position), rotation(_rotation), scale(_scale)
+    Transform3D(vec3 _position = vec3(0.0f), quat _rotation = quat(1.0f, 0.0f, 0.0f, 0.0f), vec3 _scale = vec3(1.0f))
+        : position(_position), rotation(_rotation), scale(_scale)
     {
     }
     Transform3D(vec3 _position, vec3 eulerRotation, vec3 _scale)
         : position(_position), rotation(quat(eulerRotation)), scale(_scale)
     {
     }
-    Transform3D(const reactphysics3d::Transform &t)
-        : position(toVec3(t.getPosition())), rotation(toQuat(t.getOrientation()))
+    Transform3D(const rp3d::Transform &t) : position(toVec3(t.getPosition())), rotation(toQuat(t.getOrientation()))
     {
     }
 
@@ -62,9 +61,11 @@ class Transform3D
 
     Transform3D reset();
 
-    operator reactphysics3d::Transform() const
+    Transform3D &lerp(const Transform3D &target, f32 alpha);
+
+    operator rp3d::Transform() const
     {
-        return reactphysics3d::Transform(toVec3(position), toQuat(rotation));
+        return rp3d::Transform(toVec3(position), toQuat(rotation));
     }
 
     vec3 getForward();

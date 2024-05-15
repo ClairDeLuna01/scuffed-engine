@@ -32,6 +32,8 @@
         <xs:attribute name="name" type="xs:ID" use="required" />
         <xs:attribute name="vertex" type="xs:string" use="required" />
         <xs:attribute name="fragment" type="xs:string" use="required" />
+        <xs:attribute name="transparent" type="xs:boolean" use="optional" default="false" />
+        <xs:attribute name="postTransparent" type="xs:boolean" use="optional" default="false" />
     </xs:complexType>
 
     <xs:element name="texture" type="textureType" />

@@ -32,6 +32,7 @@ def prepareScripts():
                             continue
                         else:
                             f.write(line + "\n")
+                            continue
 
                     classBody.append(line)
 

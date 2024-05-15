@@ -3,7 +3,9 @@
 out vec4 FragColor;
 
 in vec3 fragPos;
+in vec3 fragPosWorld;
 in vec3 normalDir;
+in float depth;
 
 struct Light {
                      // base alignment  | aligned offset
@@ -33,8 +35,31 @@ layout(location = 1) uniform mat4 model;
 layout(location = 2) uniform mat4 view;
 layout(location = 3) uniform mat4 projection;
 layout(location = 4) uniform vec3 viewPos;
+layout(location = 6) uniform vec2 resolution;
+layout(location = 7) uniform float focusDistance;
+layout(location = 8) uniform vec3 focusPos;
 
 void main() {
+    float radius = 0.15;
+    // check if fragment is within radius of the center of the screen
+    vec2 fragScreenPos = gl_FragCoord.xy / resolution;
+    float aspectRatio = resolution.x / resolution.y;
+    fragScreenPos.x *= aspectRatio;
+    vec2 center = vec2(0.5 * aspectRatio, 0.5);
+    float dist = distance(fragScreenPos, center);
+
+    if(dist < radius) {
+        // if fragment is in front of the focus distance, discard it
+        float far = 1000.0;
+        float near = 0.1;
+        // float focusDepth = (2.0 * near) / (far + near - focusDistance * (far - near));
+        float focusDepth = focusDistance + 2.0;
+
+        if((depth < focusDepth) && (fragPosWorld.z > focusPos.z)) {
+            discard;
+        }
+    }
+
     vec3 baseColor = vec3(0.5);
     vec3 ambient = 0.2 * baseColor;
     vec3 color = vec3(0.0);
@@ -66,6 +91,7 @@ void main() {
     // result = vec3(numLights);
 
     FragColor = vec4(result, 1.0);
+    // FragColor = vec4(vec3(depth > focusDistance), 1.0);
 
     // FragColor = vec4(normalDir, 1.0);
     // FragColor = vec4(specular, 1.0);

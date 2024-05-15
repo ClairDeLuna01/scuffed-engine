@@ -1,28 +1,35 @@
 #include "scene.hpp"
-using namespace EngineGlobals;
 
 #include "glm/glm.hpp"
 
 using namespace glm;
 
-void Scene::addShader(ShaderProgramPtr shader)
+void Scene::addShader(std::string shaderName, ShaderProgramPtr shader)
 {
-shaders.push_back(shader);
+    shaders[shaderName] = shader;
 }
 
-void Scene::addMaterial(MaterialPtr material)
+void Scene::addMaterial(std::string materialName, MaterialPtr material)
 {
-materials.push_back(material);
+    materials[materialName] = material;
 }
 
 Scene::Scene() : root(createGameObject("root"))
 {
     glGenBuffers(1, &uboLights);
     glBindBuffer(GL_UNIFORM_BUFFER, uboLights);
-    constexpr size_t uboSize = 336LL; // cf shader
+    constexpr size_t uboSize = 368ULL; // cf shader
     glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboLights);
-    }
+
+    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+
+    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
+        fbo = std::make_shared<FBO>(width, height);
+        fbo2 = std::make_shared<FBO>(width, height);
+    });
+}
 
 Scene::~Scene()
 {
@@ -57,10 +64,10 @@ ScenePtr Scene::Load(std::string path)
     ScenePtr scene = std::make_shared<Scene>();
     memset(scene->lights, 0, sizeof(lights));
 
-    std::unordered_map<std::string, ShaderProgramPtr> shaders;
+    std::unordered_map<std::string, ShaderProgramPtr> &shaders = scene->shaders;
     std::unordered_map<std::string, TexturePtr> textures;
     std::unordered_map<std::string, std::string> modelPaths;
-    std::unordered_map<std::string, MaterialPtr> materials;
+    std::unordered_map<std::string, MaterialPtr> &materials = scene->materials;
 
     struct LodDef
     {
@@ -83,158 +90,137 @@ ScenePtr Scene::Load(std::string path)
         return nullptr;
     }
 
-for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->next_sibling())
-{
-    std::string name = child->name();
-    if (name == "shader")
+    for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->next_sibling())
     {
-        std::string shaderName = child->first_attribute("name")->value();
-        std::string vertPath = child->first_attribute("vertex")->value();
-        std::string fragPath = child->first_attribute("fragment")->value();
-        ShaderProgramPtr shader = newShaderProgram(vertPath, fragPath);
-        scene->addShader(shader);
-        shaders[shaderName] = shader;
-    }
-    else if (name == "texture")
-    {
-        std::string textureName = child->first_attribute("name")->value();
-        std::string texturePath = child->first_attribute("path")->value();
-        TexturePtr texture = loadTexture(texturePath.c_str());
-        textures[textureName] = texture;
-    }
-    else if (name == "model")
-    {
-        std::string modelName = child->first_attribute("name")->value();
-        std::string modelPath = child->first_attribute("path")->value();
-        modelPaths[modelName] = modelPath;
-    }
-    else if (name == "LODmodel")
-    {
-        std::string modelName = child->first_attribute("name")->value();
-        LodModelDef lodModel;
-        for (xml_node<> *lod = child->first_node(); lod; lod = lod->next_sibling())
+        std::string name = child->name();
+        if (name == "shader")
         {
-            LodDef lodDef;
-            lodDef.path = lod->first_attribute("path")->value();
-            lodDef.distance = std::stof(lod->first_attribute("distance")->value());
-            lodModel.lods.push_back(lodDef);
+            std::string shaderName = child->first_attribute("name")->value();
+            std::string vertPath = child->first_attribute("vertex")->value();
+            std::string fragPath = child->first_attribute("fragment")->value();
+            ShaderProgramPtr shader = newShaderProgram(vertPath, fragPath);
+
+            bool transparent = false;
+            auto attr = child->first_attribute("transparent");
+            if (attr)
+            {
+                transparent = std::string(attr->value()) == "true";
+            }
+            shader->setTransparent(transparent);
+
+            bool postTransparent = false;
+            attr = child->first_attribute("postTransparent");
+            if (attr)
+            {
+                postTransparent = std::string(attr->value()) == "true";
+            }
+            shader->setPostTransparent(postTransparent);
+
+            shaders[shaderName] = shader;
         }
-        lodModels[modelName] = lodModel;
-    }
-    else if (name == "material")
-    {
-        std::string materialName = child->first_attribute("name")->value();
-        std::string shaderName;
-        std::vector<std::string> textureNames;
-        for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
+        else if (name == "texture")
         {
-            std::string propName = prop->name();
-            if (propName == "shaderRef")
-            {
-                shaderName = prop->first_attribute("shader")->value();
-            }
-            else if (propName == "textureRef")
-            {
-                textureNames.push_back(prop->first_attribute("texture")->value());
-            }
+            std::string textureName = child->first_attribute("name")->value();
+            std::string texturePath = child->first_attribute("path")->value();
+            TexturePtr texture = loadTexture(texturePath.c_str());
+            textures[textureName] = texture;
         }
-        MaterialPtr material = std::make_shared<Material>(shaders[shaderName]);
-        for (auto &textureName : textureNames)
+        else if (name == "model")
         {
-            material->addTexture(textures[textureName]);
+            std::string modelName = child->first_attribute("name")->value();
+            std::string modelPath = child->first_attribute("path")->value();
+            modelPaths[modelName] = modelPath;
         }
-
-        materials[materialName] = material;
-    }
-    else if (name == "objectDef")
-    {
-        std::string objectName = child->first_attribute("name")->value();
-        GameObjectPtr object = createGameObject(objectName);
-        for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
+        else if (name == "LODmodel")
         {
-            std::string propName = prop->name();
-            if (propName == "modelRef")
+            std::string modelName = child->first_attribute("name")->value();
+            LodModelDef lodModel;
+            for (xml_node<> *lod = child->first_node(); lod; lod = lod->next_sibling())
             {
-                std::string modelName = prop->first_attribute("model")->value();
-                bool lod = false;
-                if (lodModels.find(modelName) != lodModels.end())
-                    lod = true;
-
-                std::string materialName = prop->first_attribute("material")->value();
-
-                if (!lod)
-                {
-                    object->addComponent<Mesh>(materials[materialName], modelPaths[modelName]);
-                }
-                else
-                {
-                    std::vector<MeshPtr> lods;
-                    std::vector<float> distances;
-                    for (auto &lod : lodModels[modelName].lods)
-                    {
-                        MaterialPtr material = materials[materialName];
-                        lods.push_back(loadMesh(material, lod.path.c_str()));
-                        distances.push_back(lod.distance);
-                    }
-                    object->addComponent<LODMesh>(lods, distances);
-                }
+                LodDef lodDef;
+                lodDef.path = lod->first_attribute("path")->value();
+                lodDef.distance = std::stof(lod->first_attribute("distance")->value());
+                lodModel.lods.push_back(lodDef);
             }
-            else if (propName == "position")
-            {
-                vec3 position = parseVec3(prop->value());
-                object->getTransform().setPosition(position);
-            }
-            else if (propName == "rotation")
-            {
-                vec3 rotation = parseVec3(prop->value());
-                object->getTransform().setRotation(rotation);
-            }
-            else if (propName == "scale")
-            {
-                vec3 scale = parseVec3(prop->value());
-                object->getTransform().setScale(scale);
-            }
-            else if (propName == "script")
-            {
-                std::string scriptClassName = prop->first_attribute("className")->value();
-                ComponentPtr scriptComponent = object->addComponent(scriptClassName);
-
-                std::shared_ptr<Script> script = std::static_pointer_cast<Script>(scriptComponent);
-
-                for (xml_attribute<> *attr = prop->first_attribute(); attr; attr = attr->next_attribute())
-                {
-                    if (std::string(attr->name()) == "className")
-                        continue;
-
-                    bool rslt = script->Serialize(attr->name(), attr->value());
-                    if (!rslt)
-                    {
-                        std::cerr << "Error: Could not serialize property " << attr->name() << " with value "
-                                    << attr->value() << " for script " << scriptClassName << std::endl;
-                    }
-                }
-            }
+            lodModels[modelName] = lodModel;
         }
-
-        gameObjects[objectName] = object;
-        }
-        else if (name == "cameraDef")
+        else if (name == "material")
         {
+            std::string materialName = child->first_attribute("name")->value();
+            std::string shaderName;
+            std::vector<std::string> textureNames;
             for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
             {
                 std::string propName = prop->name();
-                if (propName == "rotation")
+                if (propName == "shaderRef")
                 {
-                    camera->getTransform().setRotation(parseVec3(prop->value()));
+                    shaderName = prop->first_attribute("shader")->value();
+                }
+                else if (propName == "textureRef")
+                {
+                    textureNames.push_back(prop->first_attribute("texture")->value());
+                }
+            }
+            MaterialPtr material = std::make_shared<Material>(shaders[shaderName]);
+            for (auto &textureName : textureNames)
+            {
+                material->addTexture(textures[textureName]);
+            }
+
+            materials[materialName] = material;
+        }
+        else if (name == "objectDef")
+        {
+            std::string objectName = child->first_attribute("name")->value();
+            GameObjectPtr object = createGameObject(objectName);
+            for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
+            {
+                std::string propName = prop->name();
+                if (propName == "modelRef")
+                {
+                    std::string modelName = prop->first_attribute("model")->value();
+                    bool lod = false;
+                    if (lodModels.find(modelName) != lodModels.end())
+                        lod = true;
+
+                    std::string materialName = prop->first_attribute("material")->value();
+
+                    if (!lod)
+                    {
+                        object->addComponent<Mesh>(materials[materialName], modelPaths[modelName]);
+                    }
+                    else
+                    {
+                        std::vector<MeshPtr> lods;
+                        std::vector<float> distances;
+                        for (auto &lod : lodModels[modelName].lods)
+                        {
+                            MaterialPtr material = materials[materialName];
+                            lods.push_back(loadMesh(material, lod.path.c_str()));
+                            distances.push_back(lod.distance);
+                        }
+                        object->addComponent<LODMesh>(lods, distances);
+                    }
                 }
                 else if (propName == "position")
                 {
-                    camera->getTransform().setPosition(parseVec3(prop->value()));
+                    vec3 position = parseVec3(prop->value());
+                    object->getTransform().setPosition(position);
+                }
+                else if (propName == "rotation")
+                {
+                    vec3 rotation = parseVec3(prop->value());
+                    object->getTransform().setRotation(rotation);
+                }
+                else if (propName == "scale")
+                {
+                    vec3 scale = parseVec3(prop->value());
+                    object->getTransform().setScale(scale);
                 }
                 else if (propName == "script")
                 {
                     std::string scriptClassName = prop->first_attribute("className")->value();
-                    ComponentPtr scriptComponent = camera->addComponent(scriptClassName);
+                    ComponentPtr scriptComponent = object->addComponent(scriptClassName);
 
                     std::shared_ptr<Script> script = std::static_pointer_cast<Script>(scriptComponent);
 
@@ -247,7 +233,44 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
                         if (!rslt)
                         {
                             std::cerr << "Error: Could not serialize property " << attr->name() << " with value "
-                                        << attr->value() << " for script " << scriptClassName << std::endl;
+                                      << attr->value() << " for script " << scriptClassName << std::endl;
+                        }
+                    }
+                }
+            }
+
+            gameObjects[objectName] = object;
+        }
+        else if (name == "cameraDef")
+        {
+            for (xml_node<> *prop = child->first_node(); prop; prop = prop->next_sibling())
+            {
+                std::string propName = prop->name();
+                if (propName == "rotation")
+                {
+                    scene->sceneCamera->getTransform().setRotation(parseVec3(prop->value()));
+                }
+                else if (propName == "position")
+                {
+                    scene->sceneCamera->getTransform().setPosition(parseVec3(prop->value()));
+                }
+                else if (propName == "script")
+                {
+                    std::string scriptClassName = prop->first_attribute("className")->value();
+                    ComponentPtr scriptComponent = scene->sceneCamera->addComponent(scriptClassName);
+
+                    std::shared_ptr<Script> script = std::static_pointer_cast<Script>(scriptComponent);
+
+                    for (xml_attribute<> *attr = prop->first_attribute(); attr; attr = attr->next_attribute())
+                    {
+                        if (std::string(attr->name()) == "className")
+                            continue;
+
+                        bool rslt = script->Serialize(attr->name(), attr->value());
+                        if (!rslt)
+                        {
+                            std::cerr << "Error: Could not serialize property " << attr->name() << " with value "
+                                      << attr->value() << " for script " << scriptClassName << std::endl;
                         }
                     }
                 }
@@ -263,8 +286,7 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
             std::string front = child->first_node("front")->first_attribute("path")->value();
             std::string back = child->first_node("back")->first_attribute("path")->value();
             CubeMapPtr cubeMap = loadCubeMap(std::array<std::string, 6>({right, left, top, bottom, front, back}));
-            ShaderProgramPtr skyboxShader =
-                std::make_shared<ShaderProgram>("shader/skybox.vert", "shader/skybox.frag");
+            ShaderProgramPtr skyboxShader = std::make_shared<ShaderProgram>("shader/skybox.vert", "shader/skybox.frag");
             MaterialPtr skyboxMaterial = std::make_shared<Material>(skyboxShader);
             scene->skyboxes[skyboxName] = std::make_shared<Skybox>(skyboxMaterial, cubeMap);
         }
@@ -305,22 +327,22 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
             }
             else if (type == "camera")
             {
-                parent->addChild(camera);
+                parent->addChild(scene->sceneCamera);
 
                 for (xml_attribute<> *attr = child->first_attribute(); attr; attr = attr->next_attribute())
                 {
                     std::string name = attr->name();
                     if (name == "position")
                     {
-                        camera->getTransform().setPosition(parseVec3(attr->value()));
+                        scene->sceneCamera->getTransform().setPosition(parseVec3(attr->value()));
                     }
                     else if (name == "rotation")
                     {
-                        camera->getTransform().setRotation(parseVec3(attr->value()));
+                        scene->sceneCamera->getTransform().setRotation(parseVec3(attr->value()));
                     }
                 }
 
-                stack.push(std::make_pair(camera, child));
+                stack.push(std::make_pair(scene->sceneCamera, child));
             }
             else if (type == "light")
             {
@@ -353,7 +375,7 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
             else if (type == "skyboxRef")
             {
                 std::string skyboxName = child->first_attribute("skybox")->value();
-                skybox = scene->skyboxes[skyboxName];
+                scene->sceneSkybox = scene->skyboxes[skyboxName];
             }
         }
     }
@@ -378,9 +400,36 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
         }
     } __attribute__((aligned(16)));
 
+    struct AllignedDirectionalLight
+    {
+        vec3 direction __attribute__((aligned(16)));
+        vec3 color __attribute__((aligned(16)));
+        f32 intensity __attribute__((aligned(4)));
+
+        AllignedDirectionalLight(DirectionalLight light)
+        {
+            direction = light.direction;
+            color = light.color;
+            intensity = light.intensity;
+        }
+
+        AllignedDirectionalLight(ShadowMappedDirectionalLight light)
+        {
+            Transform3D transform = light.getTransform();
+            direction = transform.getForward();
+            color = light.getColor();
+            intensity = light.getIntensity();
+        }
+
+        AllignedDirectionalLight()
+        {
+        }
+    } __attribute__((aligned(16)));
+
     struct LightBlock
     {
         AllignedLight __attribute__((aligned(16))) lights[MAX_LIGHTS];
+        AllignedDirectionalLight __attribute__((aligned(16))) directionalLight;
         int lightCount __attribute__((aligned(4)));
     } lightBlock;
 
@@ -389,6 +438,10 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
     {
         lightBlock.lights[i] = AllignedLight(scene->lights[i]);
     }
+
+    // TODO: add directional light to scene file
+
+    lightBlock.directionalLight = AllignedDirectionalLight(*getSun());
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lightBlock), &lightBlock);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -400,22 +453,64 @@ for (xml_node<> *child = ressourcesNode->first_node(); child; child = child->nex
 
 void Scene::Start()
 {
+    EngineGlobals::camera = sceneCamera;
+    EngineGlobals::skybox = sceneSkybox;
+
     root->Start();
+    root->LateStart();
 }
 
 void Scene::Update()
 {
-    InputManager::stepCallback(window, deltaTime);
+    // ShaderProgramPtr shadowMapShader = shaders["shadowMap"];
+    // if (shadowMapShader)
+    // {
+    //     shadowMapShader->use();
+    //     auto sun = getSun();
+    //     if (sun)
+    //     {
+    //         shadowMapShader->setUniform(UNIFORM_LOCATIONS::LIGHT_SPACE_MATRIX, sun->getLightSpaceMatrix());
 
+    //         sun->bind();
+
+    //         root->drawShadowMap();
+
+    //         sun->unbind();
+
+    //         static bool first = true;
+    //         if (first)
+    //         {
+    //             first = false;
+    //             sun->saveShadowMapToPPM("shadowMap.ppm");
+    //         }
+    //     }
+    // }
+
+    InputManager::stepCallback(EngineGlobals::window, EngineGlobals::deltaTime);
+
+    fbo->bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     root->EarlyUpdate();
     root->Update();
+    if (sceneSkybox)
+    {
+        sceneSkybox->draw();
+    }
+    fbo->unbind();
+
+    fbo2->bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    fbo->blit(fbo2);
+    fbo2->bind();
+    root->draw();
+    fbo2->blit(GL_COLOR_BUFFER_BIT);
+    fbo->blit(GL_DEPTH_BUFFER_BIT);
+    fbo2->unbind();
+    // fbo2->drawToPPM("fbo2.ppm");
+
+    root->draw();
     root->LateUpdate();
     FixedUpdateWrapper();
-
-    if (skybox)
-    {
-        skybox->draw();
-    }
 }
 
 void Scene::FixedUpdate()
@@ -427,11 +522,11 @@ void Scene::FixedUpdate()
 void Scene::FixedUpdateWrapper()
 {
     static f32 accumulator = 0.0f;
-    accumulator += deltaTime;
-    while (accumulator >= fixedDeltaTime)
+    accumulator += EngineGlobals::deltaTime;
+    while (accumulator >= EngineGlobals::fixedDeltaTime)
     {
         FixedUpdate();
-        accumulator -= fixedDeltaTime;
+        accumulator -= EngineGlobals::fixedDeltaTime;
     }
 }
 
@@ -443,4 +538,9 @@ GameObjectPtr Scene::getRoot()
 GameObjectPtr Scene::find(std::string name)
 {
     return root->find(name);
+}
+
+FBOPtr getFBO()
+{
+    return EngineGlobals::scene->getFBO();
 }

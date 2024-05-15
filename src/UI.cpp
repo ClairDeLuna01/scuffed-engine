@@ -103,6 +103,9 @@ void UIWindow::add_watcher(const std::string &name, i32 *value, WatcherMode mode
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragInt(name.c_str(), value, step, min, max); });
         break;
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() { ImGui::Text("%s: %d", name.c_str(), *value); });
+        break;
     }
 }
 
@@ -121,6 +124,9 @@ void UIWindow::add_watcher(const std::string &name, f32 *value, WatcherMode mode
 
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragFloat(name.c_str(), value, step, min, max); });
+        break;
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() { ImGui::Text("%s: %.2f", name.c_str(), *value); });
         break;
     }
 }
@@ -151,6 +157,10 @@ void UIWindow::add_watcher(const std::string &name, vec2 *value, WatcherMode mod
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragFloat2(name.c_str(), (float *)&value, step, min, max); });
         break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() { ImGui::Text("%s: (%.2f, %.2f)", name.c_str(), value->x, value->y); });
+        break;
     }
 }
 
@@ -169,6 +179,11 @@ void UIWindow::add_watcher(const std::string &name, vec3 *value, WatcherMode mod
 
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragFloat3(name.c_str(), (float *)&value, step, min, max); });
+        break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back(
+            [=]() { ImGui::Text("%s: (%.2f, %.2f, %.2f)", name.c_str(), value->x, value->y, value->z); });
         break;
     }
 }
@@ -189,6 +204,12 @@ void UIWindow::add_watcher(const std::string &name, vec4 *value, WatcherMode mod
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragFloat4(name.c_str(), (float *)&value, step, min, max); });
         break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value->x, value->y, value->z, value->w);
+        });
+        break;
     }
 }
 
@@ -207,6 +228,10 @@ void UIWindow::add_watcher(const std::string &name, ivec2 *value, WatcherMode mo
 
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragInt2(name.c_str(), (int *)&value, step, min, max); });
+        break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() { ImGui::Text("%s: (%d, %d)", name.c_str(), value->x, value->y); });
         break;
     }
 }
@@ -227,6 +252,11 @@ void UIWindow::add_watcher(const std::string &name, ivec3 *value, WatcherMode mo
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragInt3(name.c_str(), (int *)&value, step, min, max); });
         break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back(
+            [=]() { ImGui::Text("%s: (%d, %d, %d)", name.c_str(), value->x, value->y, value->z); });
+        break;
     }
 }
 
@@ -246,6 +276,11 @@ void UIWindow::add_watcher(const std::string &name, ivec4 *value, WatcherMode mo
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragInt4(name.c_str(), (int *)&value, step, min, max); });
         break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back(
+            [=]() { ImGui::Text("%s: (%d, %d, %d, %d)", name.c_str(), value->x, value->y, value->z, value->w); });
+        break;
     }
 }
 
@@ -264,6 +299,12 @@ void UIWindow::add_watcher(const std::string &name, quat *value, WatcherMode mod
 
     case WatcherMode::DRAG:
         render_callbacks.push_back([=]() { ImGui::DragFloat4(name.c_str(), (float *)&value, step, min, max); });
+        break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value->x, value->y, value->z, value->w);
+        });
         break;
     }
 }
@@ -289,6 +330,13 @@ void UIWindow::add_watcher(const std::string &name, mat2 *value, WatcherMode mod
         render_callbacks.push_back([=]() {
             ImGui::DragFloat2(name.c_str(), (float *)&value, step, min, max);
             ImGui::DragFloat2(name.c_str(), (float *)&value + 2, step, min, max);
+        });
+        break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            ImGui::Text("%s: (%.2f, %.2f)", name.c_str(), value[0][0], value[0][1]);
+            ImGui::Text("%s: (%.2f, %.2f)", name.c_str(), value[1][0], value[1][1]);
         });
         break;
     }
@@ -318,6 +366,13 @@ void UIWindow::add_watcher(const std::string &name, mat3 *value, WatcherMode mod
             ImGui::DragFloat3(name.c_str(), (float *)&value, step, min, max);
             ImGui::DragFloat3(name.c_str(), (float *)&value + 3, step, min, max);
             ImGui::DragFloat3(name.c_str(), (float *)&value + 6, step, min, max);
+        });
+        break;
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            ImGui::Text("%s: (%.2f, %.2f, %.2f)", name.c_str(), value[0][0], value[0][1], value[0][2]);
+            ImGui::Text("%s: (%.2f, %.2f, %.2f)", name.c_str(), value[1][0], value[1][1], value[1][2]);
+            ImGui::Text("%s: (%.2f, %.2f, %.2f)", name.c_str(), value[2][0], value[2][1], value[2][2]);
         });
         break;
     }
@@ -352,11 +407,24 @@ void UIWindow::add_watcher(const std::string &name, mat4 *value, WatcherMode mod
             ImGui::DragFloat4(name.c_str(), (float *)&value + 12, step, min, max);
         });
         break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value[0][0], value[0][1], value[0][2],
+                        value[0][3]);
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value[1][0], value[1][1], value[1][2],
+                        value[1][3]);
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value[2][0], value[2][1], value[2][2],
+                        value[2][3]);
+            ImGui::Text("%s: (%.2f, %.2f, %.2f, %.2f)", name.c_str(), value[3][0], value[3][1], value[3][2],
+                        value[3][3]);
+        });
+        break;
     }
 }
 
-void UIWindow::add_watcher(const std::string &name, Transform3D *value, Transform3DWatchFlags flags, WatcherMode mode,
-                           f32 min, f32 max, f32 step)
+void UIWindow::add_watcher(const std::string &name, Transform3D *value, int flags, WatcherMode mode, f32 min, f32 max,
+                           f32 step)
 {
     switch (mode)
     {
@@ -436,6 +504,26 @@ void UIWindow::add_watcher(const std::string &name, Transform3D *value, Transfor
                 vec3 scale = value->getScale();
                 ImGui::DragFloat3((name + " Scale").c_str(), (float *)&scale, step, min, max);
                 value->setScale(scale);
+            }
+        });
+        break;
+
+    case WatcherMode::READONLY:
+        render_callbacks.push_back([=]() {
+            if (flags & Transform3DWatchFlags::POSITION)
+            {
+                vec3 position = value->getPosition();
+                ImGui::Text("%s Position: (%.2f, %.2f, %.2f)", name.c_str(), position.x, position.y, position.z);
+            }
+            if (flags & Transform3DWatchFlags::ROTATION)
+            {
+                vec3 rotation = value->getEulerRotation();
+                ImGui::Text("%s Rotation: (%.2f, %.2f, %.2f)", name.c_str(), rotation.x, rotation.y, rotation.z);
+            }
+            if (flags & Transform3DWatchFlags::SCALE)
+            {
+                vec3 scale = value->getScale();
+                ImGui::Text("%s Scale: (%.2f, %.2f, %.2f)", name.c_str(), scale.x, scale.y, scale.z);
             }
         });
         break;

@@ -5,6 +5,7 @@ std::vector<cursorcallback_t> InputManager::cursorCallbacks;
 std::vector<scrollcallback_t> InputManager::scrollCallbacks;
 std::vector<stepcallback_t> InputManager::stepCallbacks;
 std::vector<mousebuttoncallback_t> InputManager::mouseButtonCallbacks;
+std::vector<windowSizeCallback_t> InputManager::windowSizeCallbacks;
 
 void InputManager::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -46,6 +47,14 @@ void InputManager::stepCallback(GLFWwindow *window, f32 deltaTime)
     }
 }
 
+void InputManager::windowSizeCallback(GLFWwindow *window, i32 width, i32 height)
+{
+    for (auto callback : windowSizeCallbacks)
+    {
+        callback(window, width, height);
+    }
+}
+
 void InputManager::addKeyCallback(keycallback_t callback)
 {
     keyCallbacks.push_back(callback);
@@ -69,4 +78,9 @@ void InputManager::addMouseButtonCallback(mousebuttoncallback_t callback)
 void InputManager::addStepCallback(stepcallback_t callback)
 {
     stepCallbacks.push_back(callback);
+}
+
+void InputManager::addWindowSizeCallback(windowSizeCallback_t callback)
+{
+    windowSizeCallbacks.push_back(callback);
 }

@@ -10,8 +10,11 @@ using namespace glm;
 namespace EngineGlobals
 {
 extern glm::ivec2 windowSize;
+extern f32 fov;
 
 extern mat4 projectionMatrix;
+
+void refreshProjectionMatrix();
 
 extern f32 deltaTime;
 extern f32 fixedDeltaTime;
@@ -30,4 +33,5 @@ extern SkyboxPtr skybox;
 extern ScenePtr scene;
 
 mat4 getViewMatrix();
+
 }; // namespace EngineGlobals

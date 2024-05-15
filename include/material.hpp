@@ -44,6 +44,21 @@ class Material
     {
         return shader;
     }
+
+    bool transparentShader()
+    {
+        return shader->isTransparent();
+    }
+
+    bool postTransparentShader()
+    {
+        return shader->isPostTransparent();
+    }
+
+    u32 getTextureCount() const
+    {
+        return textures.size();
+    }
 };
 
-using MaterialPtr = std::shared_ptr<Material>;
+using MaterialPtr = std::shared_ptr<::Material>;
