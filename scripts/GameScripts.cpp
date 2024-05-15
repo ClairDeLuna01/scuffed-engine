@@ -182,21 +182,21 @@ class PlayerController : public Script
         {
             framesSinceGrounded = 0;
             grounded = true;
-            if (special)
-            {
-                special = false;
-                rp3d::Vector3 adjustedVel = rb->getLinearVelocity() * rp3d::Vector3(0.1, 1, 0.1);
-                vec3 v = contact.normal * adjustedVel.length() * 1000.0f;
-                // std::cout << "v.length: " << length(v) << "          " << rb->getLinearVelocity().length()
-                //           << "          " << contact.normal << std::endl;
-                vec3 vel = toVec3(rb->getLinearVelocity());
-                vel += v / 500.0f;
-                rb->setLinearVelocity(toVec3(vel));
+            // if (special)
+            // {
+            //     special = false;
+            //     rp3d::Vector3 adjustedVel = rb->getLinearVelocity() * rp3d::Vector3(0.1, 1, 0.1);
+            //     vec3 v = contact.normal * adjustedVel.length() * 1000.0f;
+            //     // std::cout << "v.length: " << length(v) << "          " << rb->getLinearVelocity().length()
+            //     //           << "          " << contact.normal << std::endl;
+            //     vec3 vel = toVec3(rb->getLinearVelocity());
+            //     vel += v / 500.0f;
+            //     rb->setLinearVelocity(toVec3(vel));
 
-                v = clampLength(v, 0.0f, 5000.0f);
+            //     v = clampLength(v, 0.0f, 5000.0f);
 
-                rb->applyWorldForceAtCenterOfMass(toVec3(v));
-            }
+            //     rb->applyWorldForceAtCenterOfMass(toVec3(v));
+            // }
             // adapted from https://github.com/Vanilagy/MarbleBlast/blob/master/src/ts/marble.ts
 
             quat contactNormalRotation = fromUnitVectors(vec3(0, 1, 0), contact.normal);
