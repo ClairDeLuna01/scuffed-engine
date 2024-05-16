@@ -21,14 +21,6 @@ Scene::Scene() : root(createGameObject("root"))
     constexpr size_t uboSize = 368ULL; // cf shader
     glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboLights);
-
-    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-
-    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
-        fbo = std::make_shared<FBO>(width, height);
-        fbo2 = std::make_shared<FBO>(width, height);
-    });
 }
 
 Scene::~Scene()
@@ -456,6 +448,14 @@ void Scene::Start()
     EngineGlobals::camera = sceneCamera;
     EngineGlobals::skybox = sceneSkybox;
 
+    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+
+    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
+        fbo = std::make_shared<FBO>(width, height);
+        fbo2 = std::make_shared<FBO>(width, height);
+    });
+
     root->Start();
     root->LateStart();
 }
@@ -497,6 +497,8 @@ void Scene::Update()
         sceneSkybox->draw();
     }
     fbo->unbind();
+
+    // fbo->drawToPPM("fbo.ppm");
 
     fbo2->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

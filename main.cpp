@@ -67,6 +67,14 @@ i32 main()
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        f32 frameTime = glfwGetTime() - currentFrame;
+        while (true)
+        {
+            // cap the framerate to 60fps
+            if (glfwGetTime() - currentFrame >= 1.0f / 60.0f)
+                break;
+        }
     }
 
     getUI().shutdown();

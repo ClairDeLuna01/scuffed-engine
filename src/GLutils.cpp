@@ -185,7 +185,7 @@ void OpenGLInit()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
 
-    window = glfwCreateWindow(mode->width, mode->height, "Scuffed Engine", NULL, NULL);
+    window = glfwCreateWindow(mode->width, mode->height, "Scuffed Engine", glfwGetPrimaryMonitor(), NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window.\n");
