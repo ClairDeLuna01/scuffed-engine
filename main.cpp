@@ -68,7 +68,6 @@ i32 main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        f32 frameTime = glfwGetTime() - currentFrame;
         while (true)
         {
             // cap the framerate to 60fps
