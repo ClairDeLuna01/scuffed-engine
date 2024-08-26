@@ -539,6 +539,14 @@ void Scene::Start()
 {
     EngineGlobals::camera = sceneCamera;
 
+    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+
+    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
+        fbo = std::make_shared<FBO>(width, height);
+        fbo2 = std::make_shared<FBO>(width, height);
+    });
+
     root->Start();
     root->LateStart();
 }
