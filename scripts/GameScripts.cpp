@@ -164,8 +164,8 @@ class PlayerController : public Script
     {
         constexpr float force = 80000.0f;
 
-        Vector3 forward = toVec3(camera->getTransform().getForward() * vec3(1, 0, 1));
-        Vector3 right = toVec3(camera->getTransform().getRight() * vec3(1, 0, 1));
+        Vector3 forward = toVec3(normalize0(camera->getTransform().getForward() * vec3(1, 0, 1)));
+        Vector3 right = toVec3(normalize0(camera->getTransform().getRight() * vec3(1, 0, 1)));
 
         Vector3 inputVec = Vector3(0, 0, 0);
         inputVec += forward * ((i8)forwardKey - (i8)backwardKey);

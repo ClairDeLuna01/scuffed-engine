@@ -15,12 +15,8 @@ ComponentPtr GameObject::addComponent(ComponentPtr component)
 {
     if (component->getID() == Mesh::getStaticID())
     {
-        if (mesh)
-        {
-            std::cerr << "Error: GameObject already has a mesh component" << std::endl;
-            return nullptr;
-        }
-        mesh = component;
+        auto meshManager = getMeshManager();
+        meshManager->addMesh(std::dynamic_pointer_cast<Mesh>(component));
     }
 
     component->gameObject = shared_from_this();

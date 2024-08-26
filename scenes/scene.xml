@@ -6,15 +6,16 @@
     <ressources>
         <shader name="Unlit" vertex="shader/3D.vert" fragment="shader/unlit/texture.frag" />
         <shader name="LitTex" vertex="shader/3D.vert" fragment="shader/lit/texture.frag" />
-        <shader name="SwirlShader" vertex="shader/3D.vert" fragment="shader/lit/texture.frag"
-            postTransparent="true" />
+        <shader name="SwirlShader" vertex="shader/3D.vert" fragment="shader/lit/texture.frag" />
         <shader name="Lit" vertex="shader/3D.vert" fragment="shader/lit/basic.frag" />
         <shader name="marble" vertex="shader/3D.vert" fragment="shader/lit/marble.frag"
-            transparent="true" />
-        <shader name="marblePost" vertex="shader/3D.vert" fragment="shader/lit/marblePost.frag"
-            postTransparent="true" />
+            enableFBO="true" />
+        <shader name="marblePost" vertex="shader/3D.vert" fragment="shader/lit/marblePost.frag" />
         <shader name="green" vertex="shader/3D.vert" fragment="shader/unlit/green.frag" />
         <shader name="shadowMap" vertex="shader/shadowMap.vert" fragment="shader/shadowMap.frag" />
+        <shader name="colorFilter" vertex="shader/uv.vert"
+            fragment="shader/post-process/colorFilter.frag" enableFBO="true" />
+        <shader name="text" vertex="shader/unlit/text.vert" fragment="shader/unlit/text.frag" />
 
         <texture name="tileTex" path="res/tile.png" />
         <texture name="tileTex2" path="res/tile2.png" />
@@ -28,6 +29,37 @@
         <model name="levelModel2" path="res/level2.obj" />
         <model name="levelModel3" path="res/level3.obj" />
         <model name="MarbleSwirlModel" path="res/swirl.obj" />
+        <model name="Plane" path="res/1x1plane.obj" />
+
+        <renderLayer layerID="0" depthWrite="true">
+            <PostProcessLayer bindMask="00000000" mainFBO="0" clear="true">
+                <blitMaskElement FBO_ID="1" color="true" depth="true" />
+                <blitMaskElement FBO_ID="2" depth="true" />
+            </PostProcessLayer>
+        </renderLayer>
+        <renderLayer layerID="1" depthWrite="false">
+            <PostProcessLayer bindMask="00000001" mainFBO="1" clear="false">
+                <blitMaskElement FBO_ID="2" color="true" />
+            </PostProcessLayer>
+        </renderLayer>
+
+        <renderLayer layerID="2" depthWrite="false">
+            <PostProcessLayer bindMask="00000000" mainFBO="2" clear="false">
+                <blitMaskElement FBO_ID="2" color="true" depth="true" />
+            </PostProcessLayer>
+        </renderLayer>
+
+        <renderLayer layerID="3" depthWrite="true">
+            <PostProcessLayer bindMask="00000000" mainFBO="2" clear="false">
+                <blitMaskElement FBO_ID="2" color="true" depth="true" />
+            </PostProcessLayer>
+        </renderLayer>
+
+        <renderLayer layerID="4" depthWrite="false" depthTest="false">
+            <PostProcessLayer bindMask="00000100" mainFBO="2" clear="false">
+                <blitMaskElement FBO_ID="screen" color="true" depth="true" />
+            </PostProcessLayer>
+        </renderLayer>
 
         <!-- <LODmodel name="TerrainModel">
             <LOD path="res/plane.obj" distance="50" />
@@ -66,26 +98,32 @@
             <textureRef texture="swirlTex" />
         </material>
 
+        <material name="colorFilterMat">
+            <shaderRef shader="colorFilter" />
+        </material>
+
+
         <objectDef name="Sphere1">
-            <modelRef model="Sphere" material="MarbleMat" />
+            <modelRef model="Sphere" material="MarbleMat" RenderLayerRef="1" />
             <position>0 5 0</position>
             <scale>0.75</scale>
             <script className="PlayerController" />
         </objectDef>
 
         <objectDef name="Sphere2">
-            <modelRef model="Sphere" material="MarblePostMat" />
+            <modelRef model="Sphere" material="MarblePostMat" RenderLayerRef="2" />
             <position>0 0 0</position>
             <scale>1</scale>
         </objectDef>
 
         <objectDef name="player">
             <script className="PlayerWrapper" />
-            <script className="PlayerGUI" />
+            <!-- <script className="PlayerGUI" /> -->
         </objectDef>
 
         <objectDef name="MarbleSwirl">
-            <modelRef model="MarbleSwirlModel" material="swirlMat" />
+            <modelRef model="MarbleSwirlModel" material="swirlMat"
+                RenderLayerRef="3" />
             <position>0 0 0</position>
             <scale>1</scale>
         </objectDef>
@@ -115,10 +153,22 @@
             <script className="LevelManager" />
         </objectDef>
 
+        <objectDef name="ColorFilterObj">
+            <modelRef model="Plane" material="colorFilterMat" RenderLayerRef="4" />
+        </objectDef>
+
         <cameraDef>
             <position>0 0 10</position>
             <rotation>0 0 0</rotation>
             <script className="OrbitalCam" enableGUI="false" />
+            <script className="testScript"
+                text="[color=#ABFD8B][b]Hello[/b][color=WHITE], [color=BLUE][i]World[/i][color=WHITE]!
+omg new line
+[gradient type=rainbow freq=10.0]Gradient![/gradient]
+[wave freq=1.0 amp=0.5 speed=2.0]wwwwaaaaavvvveeee![/wave]
+[wave freq=1.0 amp=0.5 speed=2.0][gradient type=rainbow freq=5.0]you fucked up![/gradient][/wave]
+"
+            />
         </cameraDef>
 
         <skybox name="blueSky">
@@ -138,7 +188,7 @@
         <object name="player">
             <object name="Sphere1">
                 <object name="MarbleSwirl" />
-                <object name="Sphere2"></object>
+                <object name="Sphere2" />
             </object>
             <camera />
         </object>
@@ -148,6 +198,8 @@
             <object name="Level2"></object>
             <object name="Level3"></object>
         </object>
+
+        <!-- <object name="ColorFilterObj" /> -->
 
         <light position="0 20 0" color="1" intensity="1"></light>
         <light position="5 5 0" color="rgb(245 169 184)" intensity="0.75" />

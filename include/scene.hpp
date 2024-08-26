@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "AssetManager.hpp"
 #include "GLutils.hpp"
 #include "Physics.hpp"
 #include "gameObject.hpp"
@@ -31,6 +32,8 @@ class Scene
     std::unordered_map<std::string, MaterialPtr> materials;
     std::unordered_map<std::string, SkyboxPtr> skyboxes;
 
+    std::vector<RenderLayerPtr> renderLayers = {RenderLayer::DEFAULT};
+
     constexpr static size_t MAX_LIGHTS = 10;
     Light lights[MAX_LIGHTS];
     size_t lightCount = 0;
@@ -39,9 +42,6 @@ class Scene
 
     u32 uboLights;
     u32 lightsIndex = 0;
-
-    FBOPtr fbo = nullptr;
-    FBOPtr fbo2 = nullptr;
 
     CameraPtr sceneCamera = std::make_shared<Camera>();
     SkyboxPtr sceneSkybox = nullptr;
@@ -78,8 +78,23 @@ class Scene
         return material;
     }
 
-    FBOPtr getFBO()
+    ShaderProgramPtr getShader(std::string name)
     {
-        return fbo;
+        ShaderProgramPtr shader = shaders[name];
+        if (!shader)
+        {
+            std::cerr << "Shader " << name << " not found" << std::endl;
+        }
+        return shader;
+    }
+
+    RenderLayerPtr getRenderLayer(u32 index)
+    {
+        return renderLayers[index];
+    }
+
+    SkyboxPtr getSkybox()
+    {
+        return sceneSkybox;
     }
 };

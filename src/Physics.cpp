@@ -78,11 +78,10 @@ PhysicsEnginePtr getPhysicsEngine()
     return physicsEngine;
 }
 #else
-namespace rp3d = reactphysics3d;
 
 rp3d::PhysicsCommon &getPhysicsCommon()
 {
-    static rp3d::PhysicsCommon physicsCommon;
+    static rp3d::PhysicsCommon physicsCommon(new rp3d::DefaultAllocator());
     return physicsCommon;
 }
 

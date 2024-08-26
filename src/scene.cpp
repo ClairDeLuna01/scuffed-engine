@@ -1,4 +1,6 @@
 #include "scene.hpp"
+#include "AssetManager.hpp"
+#include "MeshManager.hpp"
 
 #include "glm/glm.hpp"
 
@@ -21,14 +23,6 @@ Scene::Scene() : root(createGameObject("root"))
     constexpr size_t uboSize = 368ULL; // cf shader
     glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboLights);
-
-    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-
-    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
-        fbo = std::make_shared<FBO>(width, height);
-        fbo2 = std::make_shared<FBO>(width, height);
-    });
 }
 
 Scene::~Scene()
@@ -98,23 +92,15 @@ ScenePtr Scene::Load(std::string path)
             std::string shaderName = child->first_attribute("name")->value();
             std::string vertPath = child->first_attribute("vertex")->value();
             std::string fragPath = child->first_attribute("fragment")->value();
-            ShaderProgramPtr shader = newShaderProgram(vertPath, fragPath);
 
-            bool transparent = false;
-            auto attr = child->first_attribute("transparent");
+            auto attr = child->first_attribute("enableFBO");
+            bool enableFBO = false;
             if (attr)
             {
-                transparent = std::string(attr->value()) == "true";
+                enableFBO = std::string(attr->value()) == "true";
             }
-            shader->setTransparent(transparent);
 
-            bool postTransparent = false;
-            attr = child->first_attribute("postTransparent");
-            if (attr)
-            {
-                postTransparent = std::string(attr->value()) == "true";
-            }
-            shader->setPostTransparent(postTransparent);
+            ShaderProgramPtr shader = newShaderProgram(vertPath, fragPath, enableFBO);
 
             shaders[shaderName] = shader;
         }
@@ -122,7 +108,7 @@ ScenePtr Scene::Load(std::string path)
         {
             std::string textureName = child->first_attribute("name")->value();
             std::string texturePath = child->first_attribute("path")->value();
-            TexturePtr texture = loadTexture(texturePath.c_str());
+            TexturePtr texture = AssetManager::getInstance().loadTexture(texturePath.c_str());
             textures[textureName] = texture;
         }
         else if (name == "model")
@@ -143,6 +129,83 @@ ScenePtr Scene::Load(std::string path)
                 lodModel.lods.push_back(lodDef);
             }
             lodModels[modelName] = lodModel;
+        }
+        else if (name == "renderLayer")
+        {
+            bool depthWrite = false;
+            bool depthTest = true;
+            u32 layerID = std::stoi(child->first_attribute("layerID")->value());
+            auto attr = child->first_attribute("depthWrite");
+            if (attr)
+            {
+                depthWrite = std::string(attr->value()) == "true";
+            }
+
+            auto depthTestAttr = child->first_attribute("depthTest");
+            if (depthTestAttr)
+            {
+                depthTest = std::string(depthTestAttr->value()) == "true";
+            }
+
+            PostProcessLayerPtr postProcessLayer = nullptr;
+
+            xml_node<> *postProcessLayerNode = child->first_node();
+            if (postProcessLayerNode)
+            {
+                u8 inputMask = std::stoi(postProcessLayerNode->first_attribute("bindMask")->value(), nullptr, 2);
+                u32 outputID = std::stoi(postProcessLayerNode->first_attribute("mainFBO")->value());
+                bool clear = false;
+
+                auto clearAttr = postProcessLayerNode->first_attribute("clear");
+                if (clearAttr)
+                {
+                    clear = std::string(clearAttr->value()) == "true";
+                }
+
+                u32 blitMask = 0;
+                for (xml_node<> *blitMaskElement = postProcessLayerNode->first_node("blitMaskElement"); blitMaskElement;
+                     blitMaskElement = blitMaskElement->next_sibling())
+                {
+                    std::string FBO_ID = blitMaskElement->first_attribute("FBO_ID")->value();
+                    int color = 0;
+                    int depth = 0;
+                    int stencil = 0;
+
+                    auto colorAttr = blitMaskElement->first_attribute("color");
+                    if (colorAttr)
+                        color = std::string(colorAttr->value()) == "true";
+
+                    auto depthAttr = blitMaskElement->first_attribute("depth");
+                    if (depthAttr)
+                        depth = std::string(depthAttr->value()) == "true";
+
+                    auto stencilAttr = blitMaskElement->first_attribute("stencil");
+                    if (stencilAttr)
+                        stencil = std::string(stencilAttr->value()) == "true";
+
+                    u32 mask = color + (depth << 1) + (stencil << 2);
+                    if (FBO_ID == "screen")
+                    {
+                        blitMask |= (mask << 24);
+                    }
+                    else
+                    {
+                        u32 fboID = std::stoi(FBO_ID);
+                        blitMask |= (mask << (fboID * 3));
+                    }
+                }
+                postProcessLayer = std::make_shared<PostProcessLayer>(inputMask, outputID, blitMask, clear);
+            }
+
+            if (layerID != 0)
+            {
+                scene->renderLayers.push_back(
+                    std::make_shared<RenderLayer>(layerID, depthWrite, depthTest, postProcessLayer));
+            }
+            else
+            {
+                RenderLayer::DEFAULT->setPostProcessLayer(postProcessLayer);
+            }
         }
         else if (name == "material")
         {
@@ -184,10 +247,27 @@ ScenePtr Scene::Load(std::string path)
                         lod = true;
 
                     std::string materialName = prop->first_attribute("material")->value();
+                    rapidxml::xml_attribute<char> *renderLayerAttr = prop->first_attribute("RenderLayerRef");
+                    RenderLayerPtr renderLayer = RenderLayer::DEFAULT;
+                    if (renderLayerAttr)
+                    {
+                        u32 n = std::stoi(renderLayerAttr->value());
+
+                        auto it = std::find_if(scene->renderLayers.begin(), scene->renderLayers.end(),
+                                               [n](RenderLayerPtr layer) { return layer->getID() == n; });
+                        if (it != scene->renderLayers.end())
+                        {
+                            renderLayer = *it;
+                        }
+                        else
+                        {
+                            std::cerr << "Error: Could not find render layer with ID " << n << std::endl;
+                        }
+                    }
 
                     if (!lod)
                     {
-                        object->addComponent<Mesh>(materials[materialName], modelPaths[modelName]);
+                        object->addComponent<Mesh>(materials[materialName], modelPaths[modelName], renderLayer);
                     }
                     else
                     {
@@ -196,7 +276,7 @@ ScenePtr Scene::Load(std::string path)
                         for (auto &lod : lodModels[modelName].lods)
                         {
                             MaterialPtr material = materials[materialName];
-                            lods.push_back(loadMesh(material, lod.path.c_str()));
+                            lods.push_back(loadMesh(material, lod.path.c_str(), renderLayer));
                             distances.push_back(lod.distance);
                         }
                         object->addComponent<LODMesh>(lods, distances);
@@ -363,7 +443,7 @@ ScenePtr Scene::Load(std::string path)
                     }
                     else if (name == "color")
                     {
-                        light.color = parseColor(attr->value());
+                        light.color = parseColorRGB(attr->value());
                     }
                     else if (name == "intensity")
                     {
@@ -448,13 +528,16 @@ ScenePtr Scene::Load(std::string path)
 
     // scene->root->print();
 
+    // sort render layers
+    std::sort(scene->renderLayers.begin(), scene->renderLayers.end(),
+              [](RenderLayerPtr a, RenderLayerPtr b) { return a->getID() < b->getID(); });
+
     return scene;
 }
 
 void Scene::Start()
 {
     EngineGlobals::camera = sceneCamera;
-    EngineGlobals::skybox = sceneSkybox;
 
     root->Start();
     root->LateStart();
@@ -485,30 +568,57 @@ void Scene::Update()
     //         }
     //     }
     // }
+    auto meshManager = getMeshManager();
 
     InputManager::stepCallback(EngineGlobals::window, EngineGlobals::deltaTime);
 
-    fbo->bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     root->EarlyUpdate();
     root->Update();
-    if (sceneSkybox)
+
+    // fbos[0]->bind();
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // meshManager->Update(RenderLayer::DEFAULT);
+    // if (sceneSkybox)
+    // {
+    //     sceneSkybox->draw();
+    // }
+    // fbos[0]->blit(fbos[1]);
+    // fbos[0]->blit(GL_DEPTH_BUFFER_BIT);
+    // fbos[0]->unbind();
+
+    // fbos[1]->bind();
+    // glActiveTexture(GL_TEXTURE0 + 16);
+    // fbos[0]->bindTexture();
+    // meshManager->Update(renderLayers[1]);
+    // fbos[1]->blit(GL_COLOR_BUFFER_BIT);
+    // fbos[1]->unbind();
+
+    // // static bool first = true;
+    // // if (first)
+    // // {
+    // //     first = false;
+    // //     fbo->drawToPPM("fbo.ppm");
+    // //     fbo2->drawToPPM("fbo2.ppm");
+    // // }
+
+    // glDepthMask(GL_FALSE);
+    // meshManager->Update(renderLayers[2]);
+    // glDepthMask(GL_TRUE);
+
+    // meshManager->Update(renderLayers[3]);
+
+    for (auto &layer : renderLayers)
     {
-        sceneSkybox->draw();
+        layer->render();
+        static bool first = true;
+        if (first)
+        {
+            fbos[0]->drawToPPM("fbo_0.ppm");
+            fbos[1]->drawToPPM("fbo_1.ppm");
+            first = false;
+        }
     }
-    fbo->unbind();
 
-    fbo2->bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    fbo->blit(fbo2);
-    fbo2->bind();
-    root->draw();
-    fbo2->blit(GL_COLOR_BUFFER_BIT);
-    fbo->blit(GL_DEPTH_BUFFER_BIT);
-    fbo2->unbind();
-    // fbo2->drawToPPM("fbo2.ppm");
-
-    root->draw();
     root->LateUpdate();
     FixedUpdateWrapper();
 }
@@ -538,9 +648,4 @@ GameObjectPtr Scene::getRoot()
 GameObjectPtr Scene::find(std::string name)
 {
     return root->find(name);
-}
-
-FBOPtr getFBO()
-{
-    return EngineGlobals::scene->getFBO();
 }

@@ -23,6 +23,4 @@ GLFWwindow *EngineGlobals::window = nullptr;
 
 CameraPtr EngineGlobals::camera = createCamera();
 
-SkyboxPtr EngineGlobals::skybox = nullptr;
-
 ScenePtr EngineGlobals::scene = nullptr;

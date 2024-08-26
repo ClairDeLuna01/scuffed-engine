@@ -13,10 +13,10 @@ class Material
     std::vector<TexturePtr> textures;
 
   public:
-    template <typename... Paths> Material(ShaderProgramPtr shader, Paths... paths) : shader(shader)
+    Material(ShaderProgramPtr shader) : shader(shader)
     {
-        (addTexture(loadTexture(paths)), ...);
     }
+
     ~Material() = default;
 
     void addTexture(TexturePtr texture)
@@ -38,21 +38,16 @@ class Material
     void stop() const
     {
         shader->stop();
+        for (size_t i = 0; i < textures.size(); i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            textures[i]->unbind();
+        }
     }
 
     ShaderProgramPtr getShader() const
     {
         return shader;
-    }
-
-    bool transparentShader()
-    {
-        return shader->isTransparent();
-    }
-
-    bool postTransparentShader()
-    {
-        return shader->isPostTransparent();
     }
 
     u32 getTextureCount() const

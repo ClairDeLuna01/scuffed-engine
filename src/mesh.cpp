@@ -1,5 +1,6 @@
 #include "mesh.hpp"
 #include "assetLoader.hpp"
+#include "assetManager.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -77,7 +78,7 @@ MeshPtr Mesh::addTexture(TexturePtr &texture)
 
 MeshPtr Mesh::addTexture(std::string filename)
 {
-    material->addTexture(loadTexture(filename.c_str()));
+    material->addTexture(AssetManager::getInstance().loadTexture(filename.c_str()));
     return shared_from_this();
 }
 
@@ -122,9 +123,9 @@ void Mesh::FromFile(const char *path, std::vector<uivec3> &indices, std::vector<
     loadMesh(path, indices, vertices, normals, uvs);
 }
 
-MeshPtr loadMesh(MaterialPtr mat, std::string filename)
+MeshPtr loadMesh(MaterialPtr mat, std::string filename, RenderLayerPtr layer)
 {
-    return std::make_shared<Mesh>(mat, filename);
+    return std::make_shared<Mesh>(mat, filename, layer);
 }
 
 SkyboxPtr loadSkybox(MaterialPtr mat, CubeMapPtr cubeMap)

@@ -17,6 +17,7 @@
                 <xs:element ref="shader" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="texture" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="model" minOccurs="0" maxOccurs="unbounded" />
+                <xs:element ref="renderLayer" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="LODmodel" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="material" minOccurs="0" maxOccurs="unbounded" />
                 <xs:element ref="objectDef" minOccurs="0" maxOccurs="unbounded" />
@@ -32,8 +33,46 @@
         <xs:attribute name="name" type="xs:ID" use="required" />
         <xs:attribute name="vertex" type="xs:string" use="required" />
         <xs:attribute name="fragment" type="xs:string" use="required" />
-        <xs:attribute name="transparent" type="xs:boolean" use="optional" default="false" />
-        <xs:attribute name="postTransparent" type="xs:boolean" use="optional" default="false" />
+        <xs:attribute name="enableFBO" type="xs:boolean" use="optional" default="false" />
+    </xs:complexType>
+
+    <xs:simpleType name="bitMaskType8">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[01]{8}" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="intOrScreenType">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:int" />
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="screen" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+
+    <xs:complexType name="blitMaskElementType">
+        <xs:attribute name="FBO_ID" type="intOrScreenType" use="required" />
+        <xs:attribute name="color" type="xs:boolean" use="optional" />
+        <xs:attribute name="depth" type="xs:boolean" use="optional" />
+        <xs:attribute name="stencil" type="xs:boolean" use="optional" />
+    </xs:complexType>
+
+    <xs:element name="blitMaskElement" type="blitMaskElementType" />
+
+
+    <xs:complexType name="PostProcessLayerType">
+        <xs:sequence>
+            <xs:element ref="blitMaskElement" minOccurs="0"
+                maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:attribute name="bindMask" type="bitMaskType8" use="required" />
+        <xs:attribute name="mainFBO" type="xs:int" use="required" />
+        <xs:attribute name="clear" type="xs:boolean" use="optional" />
     </xs:complexType>
 
     <xs:element name="texture" type="textureType" />
@@ -48,6 +87,19 @@
     <xs:complexType name="modelType">
         <xs:attribute name="name" type="xs:ID" use="required" />
         <xs:attribute name="path" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:element name="renderLayer" type="RenderLayerType" />
+
+    <xs:element name="PostProcessLayer" type="PostProcessLayerType" />
+
+    <xs:complexType name="RenderLayerType">
+        <xs:sequence>
+            <xs:element ref="PostProcessLayer" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:attribute name="layerID" type="xs:int" use="required" />
+        <xs:attribute name="depthWrite" type="xs:boolean" use="optional" default="false" />
+        <xs:attribute name="depthTest" type="xs:boolean" use="optional" default="true" />
     </xs:complexType>
 
     <xs:element name="LODmodel">
@@ -131,11 +183,15 @@
         </xs:complexType>
     </xs:element>
 
+
     <xs:element name="modelRef" type="modelRefType" />
+
 
     <xs:complexType name="modelRefType">
         <xs:attribute name="model" type="xs:IDREF" use="required" />
         <xs:attribute name="material" type="xs:IDREF" use="required" />
+        <xs:attribute name="RenderLayerRef" type="xs:int" use="optional"
+            default="0" />
     </xs:complexType>
 
     <xs:element name="position">

@@ -62,6 +62,16 @@ inline std::string stripPath(std::string src)
     return src.substr(lastSlashIndex + 1);
 }
 
+inline std::string upperCase(std::string src)
+{
+    std::string result = src;
+    for (char &c : result)
+    {
+        c = std::toupper(c);
+    }
+    return result;
+}
+
 // reactphysics Vector3 to glm vec3
 inline vec3 toVec3(const rp3d::Vector3 &v)
 {
@@ -173,21 +183,30 @@ enum UNIFORM_LOCATIONS : GLint
     VIEW_POS = 4,
     LIGHT_SPACE_MATRIX = 5,
     SCREEN_RESOLUTION = 6,
-    FOCUS_DISTANCE = 7,
-    FOCUS_POSITION = 8,
+    // FOCUS_DISTANCE = 7,
+    // FOCUS_POSITION = 8,
+    TIME = 7,
+
+    FONT_COLOR = 100,
+    FONT_BACKGROUND_COLOR = 101,
+    FONT_BOLD = 102,
+    FONT_ITALIC = 103,
+    FONT_UNDERLINE = 104,
+    FONT_STRIKETHROUGH = 105,
+    FONT_OUTLINE = 106,
 
     TEXTURE0 = 500,
 
     ENVIRONMENT_MAP = 749,
-    FRAMEBUFFER = 750,
+    FRAMEBUFFER0 = 750,
 };
 
-inline vec3 rgb(u8 r, u8 g, u8 b)
+inline constexpr vec3 rgb(u8 r, u8 g, u8 b)
 {
     return vec3(r / 255.0f, g / 255.0f, b / 255.0f);
 }
 
-inline vec3 rgb(vec3 rgbColor)
+inline constexpr vec3 rgb(vec3 rgbColor)
 {
     return vec3(rgbColor.r / 255.0f, rgbColor.g / 255.0f, rgbColor.b / 255.0f);
 }
@@ -197,7 +216,7 @@ template <typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = tru
     return low + static_cast<T>(rand()) / (static_cast<T>(RAND_MAX / (high - low)));
 }
 
-inline vec3 parseVec3(char *str)
+inline vec3 parseVec3(const char *str)
 {
     float x, y, z;
     int n = sscanf(str, "%f %f %f", &x, &y, &z);
@@ -216,7 +235,30 @@ inline vec3 parseVec3(char *str)
     return vec3(0.0f);
 }
 
-inline vec3 parseColor(char *str)
+inline vec4 parseVec4(const char *str)
+{
+    float x, y, z, w;
+    int n = sscanf(str, "%f %f %f %f", &x, &y, &z, &w);
+    if (n == 1)
+    {
+        return vec4(x);
+    }
+    else if (n == 2)
+    {
+        return vec4(x, y, 0.0f, 0.0f);
+    }
+    else if (n == 3)
+    {
+        return vec4(x, y, z, 0.0f);
+    }
+    else if (n == 4)
+    {
+        return vec4(x, y, z, w);
+    }
+    return vec4(0.0f);
+}
+
+inline vec3 parseColorRGB(const char *str)
 {
     if (str[0] == '#') // HTML color
     {
@@ -230,6 +272,35 @@ inline vec3 parseColor(char *str)
     else // vec3 color
     {
         return parseVec3(str);
+    }
+}
+
+inline vec4 parseColorRGBA(const char *str)
+{
+    if (str[0] == '#') // HTML color
+    {
+        u32 color = std::stoul(str + 1, nullptr, 16);
+        // test if color is in the format #RRGGBBAA or #RRGGBB
+        if (strlen(str) == 9)
+        {
+            return vec4((color >> 24) & 0xFF, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF) / 255.0f;
+        }
+        else
+        {
+            return vec4((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 255) / 255.0f;
+        }
+    }
+    else if (str[0] == 'r' && str[1] == 'g' && str[2] == 'b') // rgb color
+    {
+        return vec4(parseVec3(str + 5) / 255.0f, 1.0f);
+    }
+    else if (str[0] == 'r' && str[1] == 'g' && str[2] == 'b' && str[3] == 'a') // rgba color
+    {
+        return parseVec4(str + 6) / 255.0f;
+    }
+    else // vec4 color
+    {
+        return parseVec4(str);
     }
 }
 
@@ -255,3 +326,122 @@ inline vec3 clampLength(vec3 v, f32 min, f32 max)
     }
     return v;
 }
+
+struct AABB
+{
+    const vec3 min;
+    const vec3 max;
+
+    AABB(vec3 min, vec3 max) : min(min), max(max)
+    {
+    }
+};
+
+struct OBB
+{
+    const vec3 center;
+    const vec3 halfExtents;
+    const mat4 orientation;
+
+    OBB(vec3 center, vec3 halfExtents, mat4 orientation)
+        : center(center), halfExtents(halfExtents), orientation(orientation)
+    {
+    }
+
+    OBB() : center(vec3(0.0f)), halfExtents(vec3(0.0f)), orientation(mat4(1.0f))
+    {
+    }
+};
+
+inline std::unordered_map<std::string, vec4> text2Color = {
+    {"BLACK", vec4(0.0f, 0.0f, 0.0f, 1.0f)},         {"WHITE", vec4(1.0f, 1.0f, 1.0f, 1.0f)},
+    {"RED", vec4(1.0f, 0.0f, 0.0f, 1.0f)},           {"GREEN", vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+    {"BLUE", vec4(0.0f, 0.0f, 1.0f, 1.0f)},          {"YELLOW", vec4(1.0f, 1.0f, 0.0f, 1.0f)},
+    {"CYAN", vec4(0.0f, 1.0f, 1.0f, 1.0f)},          {"MAGENTA", vec4(1.0f, 0.0f, 1.0f, 1.0f)},
+    {"GRAY", vec4(0.5f, 0.5f, 0.5f, 1.0f)},          {"LIGHT_GRAY", vec4(0.75f, 0.75f, 0.75f, 1.0f)},
+    {"DARK_GRAY", vec4(0.25f, 0.25f, 0.25f, 1.0f)},  {"ORANGE", vec4(1.0f, 0.5f, 0.0f, 1.0f)},
+    {"PINK", vec4(1.0f, 0.0f, 0.5f, 1.0f)},          {"PURPLE", vec4(0.5f, 0.0f, 1.0f, 1.0f)},
+    {"BROWN", vec4(0.6f, 0.3f, 0.0f, 1.0f)},         {"TRANSPARENT", vec4(0.0f, 0.0f, 0.0f, 0.0f)},
+    {"LIGHT_BLUE", vec4(0.0f, 1.0f, 1.0f, 1.0f)},    {"LIGHT_GREEN", vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+    {"LIGHT_RED", vec4(1.0f, 0.0f, 0.0f, 1.0f)},     {"LIGHT_YELLOW", vec4(1.0f, 1.0f, 0.0f, 1.0f)},
+    {"LIGHT_CYAN", vec4(0.0f, 1.0f, 1.0f, 1.0f)},    {"LIGHT_MAGENTA", vec4(1.0f, 0.0f, 1.0f, 1.0f)},
+    {"LIGHT_GRAY", vec4(0.75f, 0.75f, 0.75f, 1.0f)}, {"DARK_GRAY", vec4(0.25f, 0.25f, 0.25f, 1.0f)},
+    {"LIGHT_ORANGE", vec4(1.0f, 0.5f, 0.0f, 1.0f)},  {"LIGHT_PINK", vec4(1.0f, 0.0f, 0.5f, 1.0f)},
+    {"LIGHT_PURPLE", vec4(0.5f, 0.0f, 1.0f, 1.0f)},  {"LIGHT_BROWN", vec4(0.6f, 0.3f, 0.0f, 1.0f)},
+};
+
+// source: https://stackoverflow.com/questions/66813961/c-constexpr-constructor-for-colours
+// I didn't even know what a user-defined literal was before this
+// I simultaneously love and hate C++
+// I understand this is basically just a fancy macro, but still
+namespace colours
+{
+struct Colour
+{
+    std::uint8_t r;
+    std::uint8_t g;
+    std::uint8_t b;
+    std::uint8_t a;
+
+    constexpr operator glm::vec3() const
+    {
+        return {r / 255.0f, g / 255.0f, b / 255.0f};
+    }
+    constexpr operator glm::vec4() const
+    {
+        return {r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
+    }
+};
+
+// helper to display values
+std::ostream inline &operator<<(std::ostream &os, const Colour &c)
+{
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0') << '{' << std::setw(2) << static_cast<int>(c.r) << ',' << std::setw(2)
+        << static_cast<int>(c.g) << ',' << std::setw(2) << static_cast<int>(c.b) << ',' << std::setw(2)
+        << static_cast<int>(c.a) << '}';
+    return os << oss.str();
+}
+
+// decode a nibble
+constexpr inline std::uint8_t nibble(char n)
+{
+    if (n >= '0' && n <= '9')
+        return n - '0';
+    return n - 'a' + 10;
+}
+
+// decode a byte
+constexpr inline std::uint8_t byte(const char *b)
+{
+    return nibble(b[0]) << 4 | nibble(b[1]);
+}
+
+// User-defined literals - These don't care if you start with '#' or
+// if the strings have the correct length.
+
+constexpr int roff = 1; // offsets in C strings
+constexpr int goff = 3;
+constexpr int boff = 5;
+constexpr int aoff = 7;
+
+namespace literals
+{
+constexpr Colour inline operator""_rgb(const char *s, std::size_t)
+{
+    return {byte(s + roff), byte(s + goff), byte(s + boff), 0xff};
+}
+
+constexpr Colour inline operator""_rgba(const char *s, std::size_t)
+{
+    return {byte(s + roff), byte(s + goff), byte(s + boff), byte(s + aoff)};
+}
+} // namespace literals
+using namespace literals;
+// constants
+// constexpr auto red = "#ff0000"_rgb;
+// constexpr auto green = "#00ff00"_rgb;
+// constexpr auto blue = "#0000ff"_rgb;
+} // namespace colours
+
+using namespace colours::literals;

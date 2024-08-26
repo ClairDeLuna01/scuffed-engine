@@ -35,7 +35,7 @@ layout(location = 2) uniform mat4 view;
 layout(location = 3) uniform mat4 projection;
 layout(location = 4) uniform vec3 viewPos;
 layout(location = 6) uniform vec2 resolution;
-layout(location = 750) uniform sampler2D frameBuffer;
+layout(location = 750) uniform sampler2D fbo0;
 
 void main() {
     // vec3 white = vec3(1.0);
@@ -80,6 +80,7 @@ void main() {
 
     // FragColor = vec4(result, 1.0);
 
+    // Diffraction
     vec2 screenPos = gl_FragCoord.xy / resolution;
     // float noise = texture(noiseTexture, uv).x;
     vec3 viewDir = normalize(viewPos - fragPos);
@@ -90,7 +91,8 @@ void main() {
     vec2 diffractionOffset = diffractionDir * diffractionFact * 0.01;
 
     vec2 diffractionUV = screenPos + diffractionOffset;
-    vec4 diffractionColor = texture(frameBuffer, diffractionUV);
+    vec4 diffractionColor = texture(fbo0, diffractionUV);
+
     FragColor = diffractionColor;
     // FragColor = vec4(vec3(diffractionFact), 1.0);
     // FragColor.rgb += specular;
@@ -102,4 +104,5 @@ void main() {
 
     // FragColor = vec4(normalDir, 1.0);
     // FragColor = vec4(specular, 1.0);
+    // FragColor = vec4(vec3(0.0), 1.0);
 }

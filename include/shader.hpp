@@ -20,11 +20,14 @@ using namespace glm;
 #define PROGRAM_NULL 0xffffffff
 
 // can add more types later
-enum ShaderType
+enum class ShaderType
 {
     VERTEX,
-    FRAGMENT
+    FRAGMENT,
+    GEOMETRY
 };
+
+using ShaderPtr = std::unique_ptr<class Shader>;
 
 class Shader
 {
@@ -33,7 +36,8 @@ class Shader
 
   private:
     u32 ID = SHADER_NULL;
-    u32 type;
+    GLenum typeID;
+    ShaderType type;
     std::string path;
     std::string source;
     std::string shaderName;
@@ -42,22 +46,23 @@ class Shader
     void _delete();
 
   public:
-    Shader(){};
+    Shader() {};
     Shader(std::string filename);
-    Shader(std::string filename, u32 _type);
+    Shader(std::string filename, ShaderType _type);
     ~Shader();
 
-    void load(std::string filename);
-    void load(std::string filename, u32 _type);
+    static ShaderPtr load(std::string filename);
+    static ShaderPtr load(std::string filename, ShaderType _type);
     void compile();
 
     u32 getID()
     {
         return ID;
     };
-    u32 getRawType()
+
+    GLenum getTypeID()
     {
-        return type;
+        return typeID;
     };
     std::string getType();
     std::string getShaderName()
@@ -75,20 +80,23 @@ class ShaderProgram
 
   private:
     u32 ID = PROGRAM_NULL;
-    Shader vert;
-    Shader frag;
+    ShaderPtr vert = nullptr;
+    ShaderPtr frag = nullptr;
+    ShaderPtr geom = nullptr;
     u32 _isLinked = GL_FALSE;
-    bool transparent = false;
-    bool postTransparent = false;
+
+    // not an ideal solution, maybe should read the shader source and check for a define or something
+    bool hasAccesstoFramebuffers = false;
 
     void _delete();
 
   public:
-    ShaderProgram(){};
-    ShaderProgram(std::string vertPath, std::string fragPath);
+    ShaderProgram() {};
+    ShaderProgram(std::string vertPath, std::string fragPath, bool hasAccesstoFramebuffers = false);
+    ShaderProgram(std::string vertPath, std::string fragPath, std::string geomPath,
+                  bool hasAccesstoFramebuffers = false);
     ~ShaderProgram();
 
-    void load(std::string vertPath, std::string fragPath);
     void link();
     void use();
     void stop();
@@ -99,11 +107,15 @@ class ShaderProgram
     };
     u32 getVertID()
     {
-        return vert.getID();
+        return vert->getID();
     };
     u32 getFragID()
     {
-        return frag.getID();
+        return frag->getID();
+    };
+    u32 getGeomID()
+    {
+        return geom->getID();
     };
     u32 isLinked()
     {
@@ -113,26 +125,6 @@ class ShaderProgram
     i32 getUniformLocation(std::string name)
     {
         return glGetUniformLocation(ID, name.c_str());
-    }
-
-    bool isTransparent()
-    {
-        return transparent;
-    }
-
-    bool isPostTransparent()
-    {
-        return postTransparent;
-    }
-
-    void setTransparent(bool value)
-    {
-        transparent = value;
-    }
-
-    void setPostTransparent(bool value)
-    {
-        postTransparent = value;
     }
 
     void setUniform(i32 location, const mat4 &value);
@@ -146,4 +138,4 @@ class ShaderProgram
 
 ShaderProgramPtr newShaderProgram();
 
-ShaderProgramPtr newShaderProgram(std::string vertPath, std::string fragPath);
+ShaderProgramPtr newShaderProgram(std::string vertPath, std::string fragPath, bool hasAccesstoFramebuffers = false);

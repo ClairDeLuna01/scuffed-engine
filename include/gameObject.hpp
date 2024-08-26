@@ -8,6 +8,7 @@
 #include "texture.hpp"
 #include "transform3D.hpp"
 
+#include "MeshManager.hpp"
 #include "component.hpp"
 #include "globals.hpp"
 #include "material.hpp"
@@ -38,8 +39,6 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     bool started = false;
 
     std::vector<ComponentPtr> components;
-
-    ComponentPtr mesh = nullptr;
 
     friend class Component;
 
@@ -157,34 +156,6 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         }
     }
 
-    void draw()
-    {
-        if (!enabled)
-            return;
-
-        if (mesh)
-            mesh->Update();
-
-        for (auto &child : children)
-        {
-            child->draw();
-        }
-    }
-
-    void drawShadowMap()
-    {
-        if (!enabled)
-            return;
-
-        if (mesh)
-            mesh->Update();
-
-        for (auto &child : children)
-        {
-            child->drawShadowMap();
-        }
-    }
-
     Transform3D &getTransform()
     {
         return transform;
@@ -199,12 +170,8 @@ class GameObject : public std::enable_shared_from_this<GameObject>
         std::shared_ptr<T> component = std::make_shared<T>(args...);
         if (std::is_same<T, Mesh>::value)
         {
-            if (mesh)
-            {
-                std::cerr << "Error: GameObject already has a mesh component" << std::endl;
-                return nullptr;
-            }
-            mesh = component;
+            MeshManagerPtr meshManager = getMeshManager();
+            meshManager->addMesh(std::dynamic_pointer_cast<Mesh>(component));
         }
         component->gameObject = shared_from_this();
         components.push_back(component);

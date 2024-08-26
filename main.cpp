@@ -24,6 +24,8 @@ i32 main()
     // Initialize OpenGL, GLFW and GLEW
     OpenGLInit();
 
+    initializeFBOs();
+
     // Set up projection matrix
     projectionMatrix = perspective(radians(45.0f), (f32)windowSize.x / (f32)windowSize.y, 0.1f, 1000.0f);
 

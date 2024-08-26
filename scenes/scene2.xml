@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?xml-model href="scene.xsd"?>
+<scene name="TestScene">
+    <ressources>
+        <shader name="text" vertex="shader/unlit/text.vert" fragment="shader/unlit/text.frag" />
+        <cameraDef>
+            <position>0 0 10</position>
+            <rotation>0 0 0</rotation>
+            <script className="OrbitalCam" enableGUI="false" />
+            <script className="testScript" />
+        </cameraDef>
+    </ressources>
+    <graph>
+        <camera />
+    </graph>
+</scene>

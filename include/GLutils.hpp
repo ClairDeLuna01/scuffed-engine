@@ -19,6 +19,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "inputManager.hpp"
+#include "texture.hpp"
 // using namespace EngineGlobals;
 
 // #include <Utils.hpp>

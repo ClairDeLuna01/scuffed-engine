@@ -1,4 +1,5 @@
 #include "texture.hpp"
+#include "inputManager.hpp"
 
 void Texture::genTexture()
 {
@@ -35,11 +36,6 @@ void Texture::genTexture()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-TexturePtr loadTexture(const char *path)
-{
-    return std::make_shared<Texture>(path);
-}
-
 CubeMapPtr loadCubeMap(std::array<std::string, 6> faces_filenames)
 {
     return std::make_shared<CubeMap>(faces_filenames);
@@ -47,4 +43,22 @@ CubeMapPtr loadCubeMap(std::array<std::string, 6> faces_filenames)
 CubeMapPtr loadCubeMap(std::string filename)
 {
     return std::make_shared<CubeMap>(filename);
+}
+
+std::array<FBOPtr, 8> fbos;
+
+void initializeFBOs()
+{
+    for (size_t i = 0; i < fbos.size(); i++)
+    {
+        fbos[i] = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
+    }
+
+    InputManager::addWindowSizeCallback([](GLFWwindow *window, i32 width, i32 height) {
+        // might break everything or might not idk
+        for (size_t i = 0; i < fbos.size(); i++)
+        {
+            fbos[i] = std::make_shared<FBO>(width, height);
+        }
+    });
 }

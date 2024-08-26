@@ -19,21 +19,11 @@ layout(location = 755) uniform sampler2D fbo5;
 layout(location = 756) uniform sampler2D fbo6;
 layout(location = 757) uniform sampler2D fbo7;
 
-out vec3 fragPos;
-out vec3 fragPosWorld;
 out vec3 normalDir;
 out vec2 uv;
-out float depth;
 
 void main() {
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    fragPos = vec3(model * vec4(position, 1.0));
-    fragPosWorld = vec3(view * model * vec4(position, 1.0));
-
-    normalDir = transpose(inverse(mat3(model))) * normal;
-    // normalDir = normal;
-
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+    normalDir = normal;
     uv = texCoord;
-
-    depth = gl_Position.z;
 }

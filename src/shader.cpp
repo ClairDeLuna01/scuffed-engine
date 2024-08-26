@@ -1,4 +1,5 @@
 #include "shader.hpp"
+#include "texture.hpp"
 
 Shader::~Shader()
 {
@@ -18,11 +19,15 @@ Shader::Shader(std::string filename)
 
     if (extension.compare("vert") == 0)
     {
-        Shader(filename, VERTEX);
+        Shader(filename, ShaderType::VERTEX);
     }
     else if (extension.compare("frag") == 0)
     {
-        Shader(filename, FRAGMENT);
+        Shader(filename, ShaderType::FRAGMENT);
+    }
+    else if (extension.compare("geom") == 0)
+    {
+        Shader(filename, ShaderType::GEOMETRY);
     }
     else
     {
@@ -31,71 +36,98 @@ Shader::Shader(std::string filename)
     }
 }
 
-void Shader::load(std::string filename)
+ShaderPtr Shader::load(std::string filename)
 {
-
     // get file extension for implicit function call
     std::string extension = getExtension(filename);
 
     if (extension.compare("vert") == 0)
     {
-        load(filename, VERTEX);
+        return load(filename, ShaderType::VERTEX);
     }
     else if (extension.compare("frag") == 0)
     {
-        load(filename, FRAGMENT);
+        return load(filename, ShaderType::FRAGMENT);
+    }
+    else if (extension.compare("geom") == 0)
+    {
+        return load(filename, ShaderType::GEOMETRY);
     }
     else
     {
         std::cerr << "Shader " << stripPath(filename)
                   << " doesn't have an explicit extension, please provide the shader type in the constructor.\n";
     }
+
+    return nullptr;
 }
 
-Shader::Shader(std::string filename, u32 _type)
+Shader::Shader(std::string filename, ShaderType _type)
 {
-
+    this->type = _type;
     this->shaderName = stripPath(filename);
     this->path = filename;
 
     // assign type
     switch (_type)
     {
-    case VERTEX:
-        this->type = GL_VERTEX_SHADER;
+    case ShaderType::VERTEX:
+        this->typeID = GL_VERTEX_SHADER;
         break;
-    case FRAGMENT:
-        this->type = GL_FRAGMENT_SHADER;
+    case ShaderType::FRAGMENT:
+        this->typeID = GL_FRAGMENT_SHADER;
+        break;
+    case ShaderType::GEOMETRY:
+        this->typeID = GL_GEOMETRY_SHADER;
         break;
     default:
-        std::cerr << "Invalid type provided for shader " << this->shaderName << ", (expected VERTEX or FRAGMENT).\n";
+        std::cerr << "Invalid type provided for shader " << this->shaderName
+                  << ", (expected VERTEX or FRAGMENT or GEOMETRY).\n";
         exit(EXIT_FAILURE);
     }
 
-    this->ID = glCreateShader(this->type);
+    this->ID = glCreateShader(this->typeID);
 }
 
-void Shader::load(std::string filename, u32 _type)
+ShaderPtr Shader::load(std::string filename, ShaderType _type)
 {
+    ShaderPtr shader = std::make_unique<Shader>(filename, _type);
 
-    this->shaderName = stripPath(filename);
-    this->path = filename;
+    return shader;
+}
 
-    // assign type
-    switch (_type)
+std::string getFileContent(std::string filename)
+{
+    std::string output;
+    std::ifstream file(filename, std::ios::in);
+    if (!file.is_open())
     {
-    case VERTEX:
-        this->type = GL_VERTEX_SHADER;
-        break;
-    case FRAGMENT:
-        this->type = GL_FRAGMENT_SHADER;
-        break;
-    default:
-        std::cerr << "Invalid type provided for shader " << this->shaderName << ", (expected VERTEX or FRAGMENT).\n";
+        std::cerr << "Could not open file " << filename << "\n";
         exit(EXIT_FAILURE);
     }
 
-    this->ID = glCreateShader(this->type);
+    // parse content of shader file for #include directives
+    std::string line;
+    while (std::getline(file, line))
+    {
+        // check if line is a #include directive
+        if (line.length() > 10 && line[0] == '#' && *(u64 *)(line.data() + 1) == *(u64 *)("include "))
+        {
+            constexpr char includePath[] = "shader/";
+            // extract filename from #include directive
+            std::string includeFilename = includePath + line.substr(10, line.size() - 11);
+
+            std::cout << "Including file " << includeFilename << "\n";
+
+            output.append(getFileContent(includeFilename));
+        }
+        else
+        {
+            output.append(line + "\n");
+        }
+    }
+
+    return output;
 }
 
 void Shader::compile()
@@ -108,7 +140,7 @@ void Shader::compile()
     }
 
     // read shader file
-    const size_t readSize = 4096;
+    // const size_t readSize = 4096;
     std::ifstream file(this->path, std::ios::in);
     if (!file.is_open())
     {
@@ -116,12 +148,15 @@ void Shader::compile()
         exit(EXIT_FAILURE);
     }
 
-    std::string buf = std::string(readSize, '\0');
-    while (file.read(&buf[0], readSize))
-    {
-        this->source.append(buf, 0, file.gcount());
-    }
-    this->source.append(buf, 0, file.gcount());
+    // std::string buf = std::string(readSize, '\0');
+    // while (file.read(&buf[0], readSize))
+    // {
+    //     this->source.append(buf, 0, file.gcount());
+    // }
+    // this->source.append(buf, 0, file.gcount());
+
+    // parse content of shader file for #include directives
+    this->source = getFileContent(this->path);
 
     // std::cout << "Shader Constructor: successfully read the content of " << this->shaderName << ".\n";
 
@@ -166,10 +201,12 @@ std::string Shader::getType()
 
     switch (this->type)
     {
-    case VERTEX:
+    case ShaderType::VERTEX:
         return "VERTEX";
-    case FRAGMENT:
+    case ShaderType::FRAGMENT:
         return "FRAGMENT";
+    case ShaderType::GEOMETRY:
+        return "GEOMETRY";
     default:
         return "INVALID TYPE";
     }
@@ -182,27 +219,50 @@ void Shader::_delete()
     this->ID = SHADER_NULL;
 }
 
-ShaderProgram::ShaderProgram(std::string vertPath, std::string fragPath)
+ShaderProgram::ShaderProgram(std::string vertPath, std::string fragPath, bool hasAccesstoFramebuffers)
 {
+    // load shaders
+    this->vert = Shader::load(vertPath, ShaderType::VERTEX);
+    this->frag = Shader::load(fragPath, ShaderType::FRAGMENT);
 
-    // load and compile shaders
-    this->vert.load(vertPath);
-    this->frag.load(fragPath);
+    this->hasAccesstoFramebuffers = hasAccesstoFramebuffers;
 
     this->ID = glCreateProgram();
 
     // compile shaders
     link();
+
+    if (this->hasAccesstoFramebuffers)
+    {
+        for (int i = 0; i < FBO_N; i++)
+        {
+            setUniform(UNIFORM_LOCATIONS::FRAMEBUFFER0 + i, 16 + i);
+        }
+    }
 }
 
-void ShaderProgram::load(std::string vertPath, std::string fragPath)
+ShaderProgram::ShaderProgram(std::string vertPath, std::string fragPath, std::string geomPath,
+                             bool hasAccesstoFramebuffers)
 {
+    // load shaders
+    this->vert = Shader::load(vertPath, ShaderType::VERTEX);
+    this->frag = Shader::load(fragPath, ShaderType::FRAGMENT);
+    this->geom = Shader::load(geomPath, ShaderType::GEOMETRY);
 
-    // load and compile shaders
-    this->vert.load(vertPath);
-    this->frag.load(fragPath);
+    this->hasAccesstoFramebuffers = hasAccesstoFramebuffers;
 
     this->ID = glCreateProgram();
+
+    // compile shaders
+    link();
+
+    if (this->hasAccesstoFramebuffers)
+    {
+        for (int i = 0; i < FBO_N; i++)
+        {
+            setUniform(UNIFORM_LOCATIONS::FRAMEBUFFER0 + i, 16 + i);
+        }
+    }
 }
 
 void ShaderProgram::link()
@@ -215,12 +275,20 @@ void ShaderProgram::link()
     }
 
     // compile shaders
-    this->vert.compile();
-    this->frag.compile();
+    this->vert->compile();
+    this->frag->compile();
+    if (this->geom)
+    {
+        this->geom->compile();
+    }
 
     // attach shaders
-    glAttachShader(this->ID, this->vert.getID());
-    glAttachShader(this->ID, this->frag.getID());
+    glAttachShader(this->ID, this->vert->getID());
+    glAttachShader(this->ID, this->frag->getID());
+    if (this->geom)
+    {
+        glAttachShader(this->ID, this->geom->getID());
+    }
 
     // link program
     glLinkProgram(this->ID);
@@ -240,8 +308,12 @@ void ShaderProgram::link()
 
         // delete program and shaders
         this->_delete();
-        this->vert._delete();
-        this->frag._delete();
+        this->vert->_delete();
+        this->frag->_delete();
+        if (this->geom)
+        {
+            this->geom->_delete();
+        }
 
         // print info log
         std::cerr << "Error linking program ID " << this->ID << ", see info log for more details.\n";
@@ -254,10 +326,18 @@ void ShaderProgram::link()
     }
 
     // detach shaders
-    glDetachShader(this->ID, this->vert.getID());
-    glDetachShader(this->ID, this->frag.getID());
-    this->vert._delete();
-    this->frag._delete();
+    glDetachShader(this->ID, this->vert->getID());
+    glDetachShader(this->ID, this->frag->getID());
+    if (this->geom)
+    {
+        glDetachShader(this->ID, this->geom->getID());
+    }
+    this->vert->_delete();
+    this->frag->_delete();
+    if (this->geom)
+    {
+        this->geom->_delete();
+    }
 
     // std::cout << "Successfully linked program ID " << this->ID << ".\n";
 }
@@ -406,9 +486,9 @@ void ShaderProgram::setUniform(i32 location, const u32 &value)
     }
 }
 
-ShaderProgramPtr newShaderProgram(std::string vertPath, std::string fragPath)
+ShaderProgramPtr newShaderProgram(std::string vertPath, std::string fragPath, bool hasAccesstoFramebuffers)
 {
-    return std::make_shared<ShaderProgram>(vertPath, fragPath);
+    return std::make_shared<ShaderProgram>(vertPath, fragPath, hasAccesstoFramebuffers);
 }
 
 ShaderProgramPtr newShaderProgram()

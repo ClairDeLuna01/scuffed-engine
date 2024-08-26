@@ -7,6 +7,7 @@
 #include "camera.hpp"
 #include "globals.hpp"
 #include "material.hpp"
+#include "renderLayer.hpp"
 #include "texture.hpp"
 #include "transform3D.hpp"
 #include "typedef.hpp"
@@ -304,24 +305,15 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
     std::vector<vec2> uvs;
 
     bool wireframe = false;
-
-    // horrible cursed hack to have transparent objects render after opaque objects but before some other objects
-    // since we call update multiple times on meshes, we need to keep track of the "render state" of the mesh
-    enum class RENDER_STATE
-    {
-        OPAQUE,
-        TRANSPARENT,
-        POST_TRANSPARENT,
-
-        RENDER_STATE_COUNT
-    } renderState = RENDER_STATE::OPAQUE;
+    RenderLayerPtr renderLayer;
 
   public:
-    Mesh(MaterialPtr _mat) : material(_mat)
+    Mesh(MaterialPtr _mat, RenderLayerPtr renderLayer = RenderLayer::DEFAULT) : material(_mat), renderLayer(renderLayer)
     {
         glGenVertexArrays(1, &vaoID);
     }
-    Mesh(MaterialPtr _mat, std::string filename) : material(_mat)
+    Mesh(MaterialPtr _mat, std::string filename, RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
+        : material(_mat), renderLayer(renderLayer)
     {
         glGenVertexArrays(1, &vaoID);
 
@@ -341,8 +333,8 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
     }
 
     Mesh(MaterialPtr _mat, std::vector<uivec3> _indices, std::vector<vec3> _vertices, std::vector<vec3> _normals,
-         std::vector<vec2> _uvs)
-        : material(_mat), indices(_indices), vertices(_vertices), normals(_normals), uvs(_uvs)
+         std::vector<vec2> _uvs, RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
+        : material(_mat), indices(_indices), vertices(_vertices), normals(_normals), uvs(_uvs), renderLayer(renderLayer)
     {
         glGenVertexArrays(1, &vaoID);
 
@@ -422,14 +414,14 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
         Mesh::bind();
     }
 
-    void bindTransparent(mat4 objMat)
-    {
-        bind(objMat);
+    // void bindTransparent(mat4 objMat)
+    // {
+    //     bind(objMat);
 
-        glActiveTexture(GL_TEXTURE0 + material->getTextureCount());
-        getFBO()->bindTexture();
-        material->getShader()->setUniform(UNIFORM_LOCATIONS::FRAMEBUFFER, (i32)material->getTextureCount());
-    }
+    //     glActiveTexture(GL_TEXTURE0 + material->getTextureCount());
+    //     getFBO()->bindTexture();
+    //     material->getShader()->setUniform(UNIFORM_LOCATIONS::FRAMEBUFFER, (i32)material->getTextureCount());
+    // }
 
     void draw(mat4 objMat)
     {
@@ -442,34 +434,16 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    void drawTransparent(mat4 objMat)
+    void ManualUpdate()
     {
-        bindTransparent(objMat);
-        ebo->draw();
-        unbind();
+        draw(getGameObject()->getObjectMatrix());
     }
 
-    void Update() override
+    void Update() override {};
+
+    RenderLayerPtr getRenderLayer()
     {
-        bool transparentMaterial = material->transparentShader();
-        bool postTransparentMaterial = material->postTransparentShader();
-        if (!(transparentMaterial || postTransparentMaterial) && renderState == RENDER_STATE::OPAQUE)
-            draw(getGameObject()->getObjectMatrix());
-
-        else if (transparentMaterial && renderState == RENDER_STATE::TRANSPARENT)
-            drawTransparent(getGameObject()->getObjectMatrix());
-
-        else if (postTransparentMaterial && renderState == RENDER_STATE::POST_TRANSPARENT)
-        {
-            draw(getGameObject()->getObjectMatrix());
-        }
-
-        renderState = (RENDER_STATE)((((i32)renderState) + 1) % (i32)RENDER_STATE::RENDER_STATE_COUNT);
-    }
-
-    void Update(mat4 objMat)
-    {
-        draw(objMat);
+        return renderLayer;
     }
 
     bool meshIntersect(::Ray r, vec3 &intersectionPoint, vec3 &normal) const;
@@ -485,7 +459,7 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
     friend rp3d::TriangleMesh *toRP3DMesh(const MeshPtr &mesh);
 };
 
-MeshPtr loadMesh(MaterialPtr mat, std::string filename);
+MeshPtr loadMesh(MaterialPtr mat, std::string filename, RenderLayerPtr layer = RenderLayer::DEFAULT);
 
 class LODMesh : public ComponentBase<LODMesh>
 {
@@ -509,12 +483,12 @@ class LODMesh : public ComponentBase<LODMesh>
             if (d < distances[i])
             {
                 currentMesh = i;
-                meshes[i]->Update(getGameObject()->getObjectMatrix());
+                meshes[i]->draw(getGameObject()->getObjectMatrix());
                 return;
             }
         }
         currentMesh = distances.size() - 1;
-        meshes.back()->Update(getGameObject()->getObjectMatrix());
+        meshes.back()->draw(getGameObject()->getObjectMatrix());
     }
 
     MeshPtr getCurrentMesh()

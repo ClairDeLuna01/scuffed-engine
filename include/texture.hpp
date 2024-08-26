@@ -20,10 +20,12 @@ class Texture
     // opengl stuff
     GLuint textureID;
 
+    const std::string name;
+
     void genTexture();
 
   public:
-    Texture(const char *path)
+    Texture(const char *path, const std::string &name = "") : name(name)
     {
         data = stbi_load(path, &width, &height, &nrChannels, 0);
         if (!data)
@@ -66,15 +68,23 @@ class Texture
         return textureID;
     }
 
+    inline const std::string &getName()
+    {
+        return name;
+    }
+
     inline void bind()
     {
         glBindTexture(GL_TEXTURE_2D, textureID);
     }
+
+    inline void unbind()
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 };
 
 using TexturePtr = std::shared_ptr<Texture>;
-
-TexturePtr loadTexture(const char *path);
 
 class Image
 {
@@ -357,10 +367,10 @@ class FBO
     inline void bindTexture()
     {
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+        // glBindRenderbuffer(GL_RENDERBUFFER, rboID);
     }
 
-    void drawToPPM(std::string filename)
+    void drawToPPM(std::string filename, std::string depthFilename = "")
     {
         u8 *data = new u8[width * height * 3];
         bindTexture();
@@ -378,3 +388,8 @@ class FBO
 };
 
 using FBOPtr = std::shared_ptr<FBO>;
+
+#define FBO_N 8
+extern std::array<FBOPtr, FBO_N> fbos;
+
+void initializeFBOs();
