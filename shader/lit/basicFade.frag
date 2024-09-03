@@ -3,7 +3,7 @@
 out vec4 FragColor;
 
 in vec3 fragPos;
-in vec3 fragPosWorld;
+in vec4 fragPosWorld;
 in vec3 normalDir;
 in float depth;
 

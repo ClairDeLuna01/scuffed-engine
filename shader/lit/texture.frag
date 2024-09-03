@@ -5,6 +5,8 @@
 in vec2 uv;
 in vec3 normalDir;
 in vec3 fragPos;
+in vec4 prevFragPos;
+in vec4 glFragPos;
 
 out vec4 FragColor;
 
@@ -32,4 +34,14 @@ void main() {
     vec3 result = clamp(color * texColor + ambient, 0.0, 1.0);
 
     FragColor = vec4(result, 1.0);
+
+    vec2 fragCoord = gl_FragCoord.xy;
+    int fragPosition = int(fragCoord.x) + int(fragCoord.y) * int(resolution.x);
+
+    vec2 a = (glFragPos.xy / glFragPos.w) * 0.5 + 0.5;
+    vec2 b = (prevFragPos.xy / prevFragPos.w) * 0.5 + 0.5;
+
+    vec2 velocity = a - b;
+
+    velocities[fragPosition] = velocity;
 }

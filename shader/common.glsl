@@ -1,4 +1,5 @@
 layout(location = 4) uniform vec3 viewPos;
+layout(location = 6) uniform vec2 resolution;
 layout(location = 7) uniform float time;
 
 struct Light {
@@ -23,4 +24,8 @@ layout(std140, binding = 0) uniform Lights {
     DirectionalLight dirLight; // 32 bytes        | 320
     int numLights;             //   4 bytes       | 352
                                // total: 356 bytes
+};
+
+layout(std430, binding = 1) buffer VelocityBuffer {
+vec2 velocities[];
 };

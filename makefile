@@ -1,10 +1,10 @@
 CC = g++
-CPPFLAGS = -Wall -Og -Wno-strict-aliasing --std=c++23 -Wno-format
+CPPFLAGS = -Wall -Ofast -g -Wno-strict-aliasing --std=c++23 -Wno-format
 ifeq ($(OS),Windows_NT)
 	LIBFLAGS = -L./ -lmingw32 -lglew32 -lglfw3 -lopengl32 -lgdi32 -lassimp -lreactphysics3d -lfreetype
 	LINKFLAGS =  
 else
-	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp -lreactphysics3d
+	LIBFLAGS = -L./ -lGLEW -lglfw -lGL -lX11 -lassimp -lreactphysics3d -lfreetype
 	LINKFLAGS = 
 endif
 

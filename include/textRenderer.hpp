@@ -164,6 +164,11 @@ class TextRenderer : public ComponentBase<TextRenderer>
 
     // based on https://learnopengl.com/In-Practice/Text-Rendering
     void LateUpdate() override;
+
+    void setScreenPos(vec2 screenPos)
+    {
+        this->screenPos = screenPos;
+    }
 };
 
 typedef std::shared_ptr<TextRenderer> TextRendererPtr;

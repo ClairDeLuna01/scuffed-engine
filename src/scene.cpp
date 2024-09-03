@@ -22,7 +22,7 @@ Scene::Scene() : root(createGameObject("root"))
     glBindBuffer(GL_UNIFORM_BUFFER, uboLights);
     constexpr size_t uboSize = 368ULL; // cf shader
     glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboLights);
+    glBindBufferBase(GL_UNIFORM_BUFFER, BUFFER_OBJECT_BINDINGS::LIGHTS, uboLights);
 }
 
 Scene::~Scene()
@@ -539,13 +539,9 @@ void Scene::Start()
 {
     EngineGlobals::camera = sceneCamera;
 
-    fbo = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-    fbo2 = std::make_shared<FBO>(EngineGlobals::windowSize.x, EngineGlobals::windowSize.y);
-
-    InputManager::addWindowSizeCallback([this](GLFWwindow *w, int width, int height) {
-        fbo = std::make_shared<FBO>(width, height);
-        fbo2 = std::make_shared<FBO>(width, height);
-    });
+    // glBindBuffer(GL_UNIFORM_BUFFER, EngineGlobals::clearVelocitySSBOID);
+    // glClearNamedBufferData(EngineGlobals::clearVelocitySSBOID, GL_RG32F, GL_RG, GL_FLOAT,
+    //                        EngineGlobals::clearVelocitySSBO.data());
 
     root->Start();
     root->LateStart();

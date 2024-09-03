@@ -183,8 +183,11 @@ class ElementBufferObject
     {
         genBuffer();
     }
-    ElementBufferObject(void *_data, u64 _dataLength, GLenum _type, u32 _elementSize, GLenum _usage, u64 _offset)
-        : usage(_usage), data(_data), dataLength(_dataLength), type(_type), elementSize(_elementSize), offset(_offset)
+    ElementBufferObject(void *_data, u64 _dataLength, GLenum _type, u32 _elementSize, GLenum _usage, u64 _offset,
+                        GLenum _mode = GL_TRIANGLES)
+        : mode(_mode), usage(_usage), data(_data), dataLength(_dataLength), type(_type), elementSize(_elementSize),
+          offset(_offset)
+
     {
         genBuffer();
     }
@@ -306,14 +309,17 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
 
     bool wireframe = false;
     RenderLayerPtr renderLayer;
+    std::string name;
+    static u32 nameCounter;
 
   public:
-    Mesh(MaterialPtr _mat, RenderLayerPtr renderLayer = RenderLayer::DEFAULT) : material(_mat), renderLayer(renderLayer)
+    Mesh(MaterialPtr _mat, RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
+        : material(_mat), renderLayer(renderLayer), name(std::to_string(nameCounter++))
     {
         glGenVertexArrays(1, &vaoID);
     }
     Mesh(MaterialPtr _mat, std::string filename, RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
-        : material(_mat), renderLayer(renderLayer)
+        : material(_mat), renderLayer(renderLayer), name(stripPath(filename))
     {
         glGenVertexArrays(1, &vaoID);
 
@@ -367,6 +373,18 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
         addVBO(vbo2);
     }
 
+    Mesh(MaterialPtr _mat, EBOptr &_ebo, std::vector<VertexBufferObject> _vbos) : material(_mat)
+    {
+        glGenVertexArrays(1, &vaoID);
+
+        setEBO(_ebo);
+
+        for (auto &vbo : _vbos)
+        {
+            addVBO(vbo);
+        }
+    }
+
     ~Mesh();
 
     void addVBO(VertexBufferObject &vbo);
@@ -408,6 +426,10 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
         material->getShader()->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, objMat);
         material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, getViewMatrix());
         material->getShader()->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::PREV_MVP, getGameObject()->getPrevMVP());
+        mat4 mvp = projectionMatrix * getViewMatrix() * objMat;
+        getGameObject()->setPrevMVP(mvp);
+
         material->getShader()->setUniform(UNIFORM_LOCATIONS::SCREEN_RESOLUTION, vec2(EngineGlobals::windowSize));
         material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_POS, camera->getTransform().getPosition());
 
@@ -444,6 +466,11 @@ class Mesh : public ComponentBase<Mesh>, public std::enable_shared_from_this<Mes
     RenderLayerPtr getRenderLayer()
     {
         return renderLayer;
+    }
+
+    std::string getName()
+    {
+        return name;
     }
 
     bool meshIntersect(::Ray r, vec3 &intersectionPoint, vec3 &normal) const;
@@ -501,6 +528,7 @@ class Skybox : public Mesh
 {
   private:
     CubeMapPtr cubeMap;
+    mat4 prevMVP = mat4(1.0f);
 
   public:
     Skybox(MaterialPtr _mat, CubeMapPtr _cubeMap) : Mesh(_mat), cubeMap(_cubeMap)
@@ -536,6 +564,9 @@ class Skybox : public Mesh
         material->getShader()->setUniform(UNIFORM_LOCATIONS::VIEW_MATRIX, view);
         material->getShader()->setUniform(UNIFORM_LOCATIONS::PROJECTION_MATRIX, projectionMatrix);
         material->getShader()->setUniform(UNIFORM_LOCATIONS::MODEL_MATRIX, mat4(1.0f));
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::PREV_MVP, prevMVP);
+        material->getShader()->setUniform(UNIFORM_LOCATIONS::SCREEN_RESOLUTION, vec2(EngineGlobals::windowSize));
+        prevMVP = projectionMatrix * view * mat4(1.0f);
 
         glActiveTexture(GL_TEXTURE0);
         cubeMap->bind();

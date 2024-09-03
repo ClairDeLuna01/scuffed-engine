@@ -24,3 +24,6 @@ GLFWwindow *EngineGlobals::window = nullptr;
 CameraPtr EngineGlobals::camera = createCamera();
 
 ScenePtr EngineGlobals::scene = nullptr;
+
+std::vector<float> EngineGlobals::clearVelocitySSBO = std::vector<float>(windowSize.x * windowSize.y * 2, 0.0f);
+u32 EngineGlobals::clearVelocitySSBOID = 0;

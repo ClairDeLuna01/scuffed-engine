@@ -117,7 +117,7 @@ std::string getFileContent(std::string filename)
             // extract filename from #include directive
             std::string includeFilename = includePath + line.substr(10, line.size() - 11);
 
-            std::cout << "Including file " << includeFilename << "\n";
+            // std::cout << "Including file " << includeFilename << "\n";
 
             output.append(getFileContent(includeFilename));
         }

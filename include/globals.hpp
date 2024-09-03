@@ -32,4 +32,7 @@ extern ScenePtr scene;
 
 mat4 getViewMatrix();
 
+extern std::vector<float> clearVelocitySSBO;
+extern u32 clearVelocitySSBOID;
+
 }; // namespace EngineGlobals

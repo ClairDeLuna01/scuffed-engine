@@ -1,4 +1,5 @@
 #include "GLutils.hpp"
+#include "cstdlib"
 
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
@@ -185,7 +186,7 @@ void OpenGLInit()
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
 
-    window = glfwCreateWindow(mode->width, mode->height, "Scuffed Engine", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow(mode->width, mode->height, "Scuffed Engine", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window.\n");
@@ -246,4 +247,26 @@ void OpenGLInit()
     glViewport(0, 0, width, height);
 
     glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
+
+    // initialize VelocityBuffer SSBO
+    GLuint clearVelocitySSBOID;
+    glGenBuffers(1, &clearVelocitySSBOID);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, clearVelocitySSBOID);
+    EngineGlobals::clearVelocitySSBO = std::vector<float>(windowSize.x * windowSize.y * 2, 0.0f);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vec2) * windowSize.x * windowSize.y,
+                 EngineGlobals::clearVelocitySSBO.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_OBJECT_BINDINGS::VELOCITY_BUFFER, clearVelocitySSBOID);
+
+    EngineGlobals::clearVelocitySSBOID = clearVelocitySSBOID;
+
+    auto SSBOResizeCallback = [](GLFWwindow *window, i32 width, i32 height) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, EngineGlobals::clearVelocitySSBOID);
+        EngineGlobals::clearVelocitySSBO = std::vector<float>(width * height * 2, 0.0f);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vec2) * width * height, EngineGlobals::clearVelocitySSBO.data(),
+                     GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_OBJECT_BINDINGS::VELOCITY_BUFFER,
+                         EngineGlobals::clearVelocitySSBOID);
+    };
+
+    InputManager::addWindowSizeCallback(SSBOResizeCallback);
 }

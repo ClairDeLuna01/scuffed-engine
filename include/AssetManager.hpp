@@ -16,6 +16,8 @@ class AssetManager
   private:
     std::unordered_map<std::string, TexturePtr> textures;
     std::unordered_map<std::string, FontPtr> fonts;
+    std::unordered_map<std::string, MaterialPtr> materials;
+    std::unordered_map<std::string, MeshPtr> meshes;
 
     bool fileExists(const std::string &filename)
     {
@@ -113,6 +115,69 @@ class AssetManager
         }
 
         return loadTextureByName(filename);
+    }
+
+    /*
+        MaterialPtr loadMaterial(std::string shaderName)
+    {
+        if (materials.find(shaderName) == materials.end())
+        {
+            materials[shaderName] = std::make_shared<Material>(shaderName);
+        }
+        return materials[shaderName];
+    }
+
+    MaterialPtr getMaterial(std::string shaderName)
+    {
+        if (materials.find(shaderName) != materials.end())
+        {
+            return materials[shaderName];
+        }
+        return loadMaterial(shaderName);
+    }
+
+    MeshPtr loadMesh(MaterialPtr material, std::string filepath, RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
+    {
+        std::string filename = stripPath(filepath);
+        if (meshes.find(filename) == meshes.end())
+        {
+            meshes[filename] = std::make_shared<Mesh>(material, filepath, renderLayer);
+        }
+        return meshes[filename];
+    }
+
+    MeshPtr loadMeshByName(MaterialPtr material, std::string meshName,
+                           RenderLayerPtr renderLayer = RenderLayer::DEFAULT)
+    {
+        std::string filename = searchForRes(meshName);
+        return loadMesh(material, filename, renderLayer);
+    }
+
+    MeshPtr getMesh(std::string filename)
+    {
+        // first search by filename in keys
+        if (meshes.find(filename) != meshes.end())
+        {
+            return meshes[filename];
+        }
+        // else search by mesh name
+        for (auto &m : meshes)
+        {
+            if (m.second->getName() == filename)
+            {
+                return m.second;
+            }
+        }
+
+        // introduces inconsistency in the API :/
+        return nullptr;
+    }
+    */
+
+    std::string stripPath(std::string filepath)
+    {
+        size_t found = filepath.find_last_of("/\\");
+        return filepath.substr(found + 1);
     }
 
     static AssetManager &getInstance()

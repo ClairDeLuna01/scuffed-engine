@@ -7,6 +7,7 @@ layout(location = 2) in vec2 texCoord;
 layout(location = 1) uniform mat4 model;
 layout(location = 2) uniform mat4 view;
 layout(location = 3) uniform mat4 projection;
+layout(location = 8) uniform mat4 prevMVP;
 layout(location = 4) uniform vec3 viewPos;
 layout(location = 6) uniform vec2 resolution;
 

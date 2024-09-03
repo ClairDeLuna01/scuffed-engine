@@ -1,4 +1,4 @@
-#include "RenderLayer.hpp"
+#include "renderLayer.hpp"
 #include "MeshManager.hpp"
 #include "globals.hpp"
 #include "mesh.hpp"
@@ -69,11 +69,11 @@ void DefaultRenderLayer::render()
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE);
         }
-        meshManager->Update(shared_from_this());
         if (EngineGlobals::scene->getSkybox())
         {
             EngineGlobals::scene->getSkybox()->draw();
         }
+        meshManager->Update(shared_from_this());
         if (!depthWrite)
             glDepthMask(GL_TRUE);
         if (!depthTest)
@@ -92,11 +92,11 @@ void DefaultRenderLayer::render()
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE);
         }
-        meshManager->Update(shared_from_this());
         if (EngineGlobals::scene->getSkybox())
         {
             EngineGlobals::scene->getSkybox()->draw();
         }
+        meshManager->Update(shared_from_this());
         if (!depthWrite)
             glDepthMask(GL_TRUE);
         if (!depthTest)

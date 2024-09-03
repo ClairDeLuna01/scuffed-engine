@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?xml-model href="scene.xsd"?>
+<scene name="TestScene">
+    <ressources>
+        <shader name="text" vertex="shader/unlit/text.vert" fragment="shader/unlit/text.frag" />
+        <shader name="Lit" vertex="shader/3D.vert" fragment="shader/lit/basic.frag" />
+
+        <model name="Sphere" path="res/sphere.obj" />
+
+        <material name="BasicMat">
+            <shaderRef shader="Lit" />
+        </material>
+
+        <cameraDef>
+            <position>0 0 10</position>
+            <rotation>0 0 0</rotation>
+            <script className="OrbitalCam" enableGUI="false" />
+        </cameraDef>
+
+
+    </ressources>
+    <graph>
+        <camera />
+    </graph>
+</scene>

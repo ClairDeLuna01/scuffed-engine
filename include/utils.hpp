@@ -186,6 +186,7 @@ enum UNIFORM_LOCATIONS : GLint
     // FOCUS_DISTANCE = 7,
     // FOCUS_POSITION = 8,
     TIME = 7,
+    PREV_MVP = 8,
 
     FONT_COLOR = 100,
     FONT_BACKGROUND_COLOR = 101,
@@ -199,6 +200,12 @@ enum UNIFORM_LOCATIONS : GLint
 
     ENVIRONMENT_MAP = 749,
     FRAMEBUFFER0 = 750,
+};
+
+enum BUFFER_OBJECT_BINDINGS : GLint
+{
+    LIGHTS = 0,
+    VELOCITY_BUFFER = 1,
 };
 
 inline constexpr vec3 rgb(u8 r, u8 g, u8 b)

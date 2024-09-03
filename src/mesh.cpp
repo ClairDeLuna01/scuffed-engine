@@ -1,12 +1,14 @@
 #include "mesh.hpp"
+#include "AssetManager.hpp"
 #include "assetLoader.hpp"
-#include "assetManager.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 
 #include <cstring>
+
+u32 Mesh::nameCounter = 0;
 
 std::shared_ptr<DirectionalLight> getSun()
 {

@@ -37,6 +37,7 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     mat4 objMat = mat4(1.0f);
     bool enabled = true;
     bool started = false;
+    mat4 prevMVP = mat4(1.0f);
 
     std::vector<ComponentPtr> components;
 
@@ -100,6 +101,16 @@ class GameObject : public std::enable_shared_from_this<GameObject>
     mat4 getObjectMatrix()
     {
         return objMat;
+    }
+
+    mat4 getPrevMVP()
+    {
+        return prevMVP;
+    }
+
+    void setPrevMVP(mat4 _prevMVP)
+    {
+        prevMVP = _prevMVP;
     }
 
     void setTransform(Transform3D _transform)

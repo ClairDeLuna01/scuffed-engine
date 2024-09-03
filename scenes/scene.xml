@@ -29,7 +29,7 @@
         <model name="levelModel2" path="res/level2.obj" />
         <model name="levelModel3" path="res/level3.obj" />
         <model name="MarbleSwirlModel" path="res/swirl.obj" />
-        <model name="Plane" path="res/1x1plane.obj" />
+        <model name="PostProcessQuad" path="res/1x1plane.obj" />
 
         <renderLayer layerID="0" depthWrite="true">
             <PostProcessLayer bindMask="00000000" mainFBO="0" clear="true">
@@ -154,21 +154,21 @@
         </objectDef>
 
         <objectDef name="ColorFilterObj">
-            <modelRef model="Plane" material="colorFilterMat" RenderLayerRef="4" />
+            <modelRef model="PostProcessQuad" material="colorFilterMat" RenderLayerRef="4" />
         </objectDef>
 
         <cameraDef>
             <position>0 0 10</position>
             <rotation>0 0 0</rotation>
             <script className="OrbitalCam" enableGUI="false" />
-            <script className="testScript"
+            <!-- <script className="testScript"
                 text="[color=#ABFD8B][b]Hello[/b][color=WHITE], [color=BLUE][i]World[/i][color=WHITE]!
 omg new line
 [gradient type=rainbow freq=10.0]Gradient![/gradient]
 [wave freq=1.0 amp=0.5 speed=2.0]wwwwaaaaavvvveeee![/wave]
 [wave freq=1.0 amp=0.5 speed=2.0][gradient type=rainbow freq=5.0]you fucked up![/gradient][/wave]
 "
-            />
+            /> -->
         </cameraDef>
 
         <skybox name="blueSky">
